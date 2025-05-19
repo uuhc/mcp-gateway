@@ -6,11 +6,11 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { getMCPServers, createMCPServer, updateMCPServer, deleteMCPServer, exportMCPServer, syncMCPServers, getUserAuthorizedTenants, getTenant } from '../../services/api';
+import type { Gateway } from '../../types/gateway';
 import { toast } from '../../utils/toast';
 
 import { ConfigEditor } from './components/ConfigEditor';
 import OpenAPIImport from './components/OpenAPIImport';
-import type { Gateway } from '../../types/gateway';
 
 declare global {
   interface Window {

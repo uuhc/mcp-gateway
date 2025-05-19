@@ -1,6 +1,6 @@
 import { Input, Select, SelectItem, Button } from "@heroui/react";
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useState, useEffect } from 'react';
 
 import { GatewayConfig } from '../types';
 
@@ -14,7 +14,10 @@ export function MCPServersConfig({
   updateConfig
 }: MCPServersConfigProps) {
   const { t } = useTranslation();
-  const mcpServers = parsedConfig?.mcpServers || [{ type: "stdio", name: "", command: "", args: [], env: {} }];
+  const mcpServers = useMemo(() => 
+    parsedConfig?.mcpServers || [{ type: "stdio", name: "", command: "", args: [], env: {} }],
+    [parsedConfig?.mcpServers]
+  );
   const [commandInputs, setCommandInputs] = useState<{ [key: number]: string }>({});
 
   // Initialize command inputs when mcpServers changes
@@ -203,6 +206,16 @@ export function MCPServersConfig({
             <SelectItem key="stdio">stdio</SelectItem>
             <SelectItem key="sse">sse</SelectItem>
             <SelectItem key="streamable-http">streamable-http</SelectItem>
+          </Select>
+
+          <Select
+            label={t('gateway.startup_policy')}
+            selectedKeys={[server.policy || "onDemand"]}
+            onChange={(e) => updateServer(index, 'policy', e.target.value)}
+            aria-label={t('gateway.startup_policy')}
+          >
+            <SelectItem key="onDemand">{t('gateway.policy_on_demand')}</SelectItem>
+            <SelectItem key="onStart">{t('gateway.policy_on_start')}</SelectItem>
           </Select>
 
           {(server.type === 'stdio' || !server.type) && (

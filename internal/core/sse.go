@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mcp-ecosystem/mcp-gateway/pkg/version"
+
 	"go.uber.org/zap"
 
 	"github.com/mcp-ecosystem/mcp-gateway/internal/common/cnst"
@@ -309,8 +311,8 @@ func (s *Server) handlePostMessage(c *gin.Context, conn session.Connection) {
 		result := mcp.InitializedResult{
 			ProtocolVersion: mcp.LatestProtocolVersion,
 			ServerInfo: mcp.ImplementationSchema{
-				Name:    "mcp-gateway",
-				Version: "0.1.0",
+				Name:    cnst.AppName,
+				Version: version.Get(),
 			},
 			Capabilities: mcp.ServerCapabilitiesSchema{
 				Tools: mcp.ToolsCapabilitySchema{
@@ -339,55 +341,37 @@ func (s *Server) handlePostMessage(c *gin.Context, conn session.Connection) {
 				return
 			}
 		case cnst.BackendProtoStdio:
-			mcpProxyCfg, ok := s.state.prefixToMCPServerConfig[conn.Meta().Prefix]
-			if !ok {
-				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
-				return
-			}
-
 			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
 			if !ok {
 				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
 				return
 			}
 
-			tools, err = transport.FetchToolList(c.Request.Context(), conn, mcpProxyCfg)
+			tools, err = transport.FetchTools(c.Request.Context())
 			if err != nil {
 				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
 				return
 			}
 		case cnst.BackendProtoSSE:
-			mcpProxyCfg, ok := s.state.prefixToMCPServerConfig[conn.Meta().Prefix]
-			if !ok {
-				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
-				return
-			}
-
 			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
 			if !ok {
 				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
 				return
 			}
 
-			tools, err = transport.FetchToolList(c.Request.Context(), conn, mcpProxyCfg)
+			tools, err = transport.FetchTools(c.Request.Context())
 			if err != nil {
 				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
 				return
 			}
 		case cnst.BackendProtoStreamable:
-			mcpProxyCfg, ok := s.state.prefixToMCPServerConfig[conn.Meta().Prefix]
-			if !ok {
-				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
-				return
-			}
-
 			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
 			if !ok {
 				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
 				return
 			}
 
-			tools, err = transport.FetchToolList(c.Request.Context(), conn, mcpProxyCfg)
+			tools, err = transport.FetchTools(c.Request.Context())
 			if err != nil {
 				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
 				return
@@ -432,13 +416,6 @@ func (s *Server) handlePostMessage(c *gin.Context, conn session.Connection) {
 		case cnst.BackendProtoHttp:
 			result = s.invokeHTTPTool(c, req, conn, params)
 		case cnst.BackendProtoStdio:
-			mcpProxyCfg, ok := s.state.prefixToMCPServerConfig[conn.Meta().Prefix]
-			if !ok {
-				errMsg := "Server configuration not found"
-				s.sendProtocolError(c, req.Id, errMsg, http.StatusNotFound, mcp.ErrorCodeMethodNotFound)
-				return
-			}
-
 			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
 			if !ok {
 				errMsg := "Server configuration not found"
@@ -446,19 +423,12 @@ func (s *Server) handlePostMessage(c *gin.Context, conn session.Connection) {
 				return
 			}
 
-			result, err = transport.InvokeTool(c, conn, mcpProxyCfg, params)
+			result, err = transport.CallTool(c.Request.Context(), params, mergeRequestInfo(conn.Meta().Request, c.Request))
 			if err != nil {
 				s.sendToolExecutionError(c, conn, req, err, true)
 				return
 			}
 		case cnst.BackendProtoSSE:
-			mcpProxyCfg, ok := s.state.prefixToMCPServerConfig[conn.Meta().Prefix]
-			if !ok {
-				errMsg := "Server configuration not found"
-				s.sendProtocolError(c, req.Id, errMsg, http.StatusNotFound, mcp.ErrorCodeMethodNotFound)
-				return
-			}
-
 			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
 			if !ok {
 				errMsg := "Server configuration not found"
@@ -466,19 +436,12 @@ func (s *Server) handlePostMessage(c *gin.Context, conn session.Connection) {
 				return
 			}
 
-			result, err = transport.InvokeTool(c, conn, mcpProxyCfg, params)
+			result, err = transport.CallTool(c.Request.Context(), params, mergeRequestInfo(conn.Meta().Request, c.Request))
 			if err != nil {
 				s.sendToolExecutionError(c, conn, req, err, true)
 				return
 			}
 		case cnst.BackendProtoStreamable:
-			mcpProxyCfg, ok := s.state.prefixToMCPServerConfig[conn.Meta().Prefix]
-			if !ok {
-				errMsg := "Server configuration not found"
-				s.sendProtocolError(c, req.Id, errMsg, http.StatusNotFound, mcp.ErrorCodeMethodNotFound)
-				return
-			}
-
 			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
 			if !ok {
 				errMsg := "Server configuration not found"
@@ -486,7 +449,7 @@ func (s *Server) handlePostMessage(c *gin.Context, conn session.Connection) {
 				return
 			}
 
-			result, err = transport.InvokeTool(c, conn, mcpProxyCfg, params)
+			result, err = transport.CallTool(c.Request.Context(), params, mergeRequestInfo(conn.Meta().Request, c.Request))
 			if err != nil {
 				s.sendToolExecutionError(c, conn, req, err, true)
 				return
