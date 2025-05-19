@@ -16,8 +16,13 @@ import (
 	"github.com/mcp-ecosystem/mcp-gateway/pkg/version"
 )
 
-// FetchSSEToolList fetches the list of available tools from an SSE backend
-func FetchSSEToolList(ctx context.Context, _ session.Connection, mcpProxyCfg config.MCPServerConfig) ([]mcp.ToolSchema, error) {
+// SSETransport implements Transport using Server-Sent Events
+type SSETransport struct{}
+
+var _ Transport = (*SSETransport)(nil)
+
+// FetchToolList implements Transport.FetchToolList
+func (t *SSETransport) FetchToolList(ctx context.Context, _ session.Connection, mcpProxyCfg config.MCPServerConfig) ([]mcp.ToolSchema, error) {
 	// Create SSE transport
 	sseTransport, err := transport.NewSSE(mcpProxyCfg.URL)
 	if err != nil {
@@ -95,8 +100,8 @@ func FetchSSEToolList(ctx context.Context, _ session.Connection, mcpProxyCfg con
 	return tools, nil
 }
 
-// InvokeSSETool handles tool invocation for SSE MCP protocol
-func InvokeSSETool(c *gin.Context, conn session.Connection, mcpProxyCfg config.MCPServerConfig, params mcp.CallToolParams) (*mcp.CallToolResult, error) {
+// InvokeTool implements Transport.InvokeTool
+func (t *SSETransport) InvokeTool(c *gin.Context, conn session.Connection, mcpProxyCfg config.MCPServerConfig, params mcp.CallToolParams) (*mcp.CallToolResult, error) {
 	// Convert arguments to map[string]any
 	var args map[string]any
 	if err := json.Unmarshal(params.Arguments, &args); err != nil {

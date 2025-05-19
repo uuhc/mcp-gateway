@@ -73,7 +73,10 @@ export function AccessibleModal(props: ModalProps) {
 
   return (
     <div ref={containerRef} data-accessible-modal-container>
-      <Modal {...props} />
+      <Modal 
+        {...props} 
+        scrollBehavior={props.scrollBehavior || "inside"} 
+      />
     </div>
   );
 }

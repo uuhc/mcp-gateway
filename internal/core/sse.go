@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mcp-ecosystem/mcp-gateway/internal/core/mcpproxy"
-
 	"go.uber.org/zap"
 
 	"github.com/mcp-ecosystem/mcp-gateway/internal/common/cnst"
@@ -347,7 +345,13 @@ func (s *Server) handlePostMessage(c *gin.Context, conn session.Connection) {
 				return
 			}
 
-			tools, err = mcpproxy.FetchStdioToolList(c.Request.Context(), conn, mcpProxyCfg)
+			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
+			if !ok {
+				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
+				return
+			}
+
+			tools, err = transport.FetchToolList(c.Request.Context(), conn, mcpProxyCfg)
 			if err != nil {
 				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
 				return
@@ -359,7 +363,13 @@ func (s *Server) handlePostMessage(c *gin.Context, conn session.Connection) {
 				return
 			}
 
-			tools, err = mcpproxy.FetchSSEToolList(c.Request.Context(), conn, mcpProxyCfg)
+			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
+			if !ok {
+				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
+				return
+			}
+
+			tools, err = transport.FetchToolList(c.Request.Context(), conn, mcpProxyCfg)
 			if err != nil {
 				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
 				return
@@ -371,7 +381,13 @@ func (s *Server) handlePostMessage(c *gin.Context, conn session.Connection) {
 				return
 			}
 
-			tools, err = mcpproxy.FetchStreamableToolList(c.Request.Context(), conn, mcpProxyCfg)
+			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
+			if !ok {
+				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
+				return
+			}
+
+			tools, err = transport.FetchToolList(c.Request.Context(), conn, mcpProxyCfg)
 			if err != nil {
 				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
 				return
@@ -422,7 +438,15 @@ func (s *Server) handlePostMessage(c *gin.Context, conn session.Connection) {
 				s.sendProtocolError(c, req.Id, errMsg, http.StatusNotFound, mcp.ErrorCodeMethodNotFound)
 				return
 			}
-			result, err = mcpproxy.InvokeStdioTool(c, conn, mcpProxyCfg, params)
+
+			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
+			if !ok {
+				errMsg := "Server configuration not found"
+				s.sendProtocolError(c, req.Id, errMsg, http.StatusNotFound, mcp.ErrorCodeMethodNotFound)
+				return
+			}
+
+			result, err = transport.InvokeTool(c, conn, mcpProxyCfg, params)
 			if err != nil {
 				s.sendToolExecutionError(c, conn, req, err, true)
 				return
@@ -434,7 +458,15 @@ func (s *Server) handlePostMessage(c *gin.Context, conn session.Connection) {
 				s.sendProtocolError(c, req.Id, errMsg, http.StatusNotFound, mcp.ErrorCodeMethodNotFound)
 				return
 			}
-			result, err = mcpproxy.InvokeSSETool(c, conn, mcpProxyCfg, params)
+
+			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
+			if !ok {
+				errMsg := "Server configuration not found"
+				s.sendProtocolError(c, req.Id, errMsg, http.StatusNotFound, mcp.ErrorCodeMethodNotFound)
+				return
+			}
+
+			result, err = transport.InvokeTool(c, conn, mcpProxyCfg, params)
 			if err != nil {
 				s.sendToolExecutionError(c, conn, req, err, true)
 				return
@@ -446,7 +478,15 @@ func (s *Server) handlePostMessage(c *gin.Context, conn session.Connection) {
 				s.sendProtocolError(c, req.Id, errMsg, http.StatusNotFound, mcp.ErrorCodeMethodNotFound)
 				return
 			}
-			result, err = mcpproxy.InvokeStreamableTool(c, conn, mcpProxyCfg, params)
+
+			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
+			if !ok {
+				errMsg := "Server configuration not found"
+				s.sendProtocolError(c, req.Id, errMsg, http.StatusNotFound, mcp.ErrorCodeMethodNotFound)
+				return
+			}
+
+			result, err = transport.InvokeTool(c, conn, mcpProxyCfg, params)
 			if err != nil {
 				s.sendToolExecutionError(c, conn, req, err, true)
 				return

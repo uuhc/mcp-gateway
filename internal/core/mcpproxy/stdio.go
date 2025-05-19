@@ -18,7 +18,13 @@ import (
 	"github.com/mcp-ecosystem/mcp-gateway/pkg/version"
 )
 
-func FetchStdioToolList(ctx context.Context, _ session.Connection, mcpProxyCfg config.MCPServerConfig) ([]mcp.ToolSchema, error) {
+// StdioTransport implements Transport using standard input/output
+type StdioTransport struct{}
+
+var _ Transport = (*StdioTransport)(nil)
+
+// FetchToolList implements Transport.FetchToolList
+func (t *StdioTransport) FetchToolList(ctx context.Context, _ session.Connection, mcpProxyCfg config.MCPServerConfig) ([]mcp.ToolSchema, error) {
 	// Create stdio transport with the command and arguments
 	stdioTransport := transport.NewStdio(
 		mcpProxyCfg.Command,
@@ -97,18 +103,18 @@ func FetchStdioToolList(ctx context.Context, _ session.Connection, mcpProxyCfg c
 	return tools, nil
 }
 
-func InvokeStdioTool(c *gin.Context, conn session.Connection, mcpProxyCfg config.MCPServerConfig, params mcp.CallToolParams) (*mcp.CallToolResult, error) {
+// InvokeTool implements Transport.InvokeTool
+func (t *StdioTransport) InvokeTool(c *gin.Context, conn session.Connection, mcpProxyCfg config.MCPServerConfig, params mcp.CallToolParams) (*mcp.CallToolResult, error) {
 	// Convert arguments to map[string]any
 	var args map[string]any
 	if err := json.Unmarshal(params.Arguments, &args); err != nil {
-		// TODO: we can wrapper error into a struct to contain code
 		return nil, fmt.Errorf("invalid tool arguments: %w", err)
 	}
 
-	return executeStdioTool(c, conn.Meta().Request, &mcpProxyCfg, args, c.Request, params)
+	return t.executeStdioTool(c, conn.Meta().Request, &mcpProxyCfg, args, c.Request, params)
 }
 
-func executeStdioTool(
+func (t *StdioTransport) executeStdioTool(
 	c *gin.Context,
 	requestMeta *session.RequestInfo,
 	tool *config.MCPServerConfig,

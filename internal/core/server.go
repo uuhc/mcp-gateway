@@ -9,6 +9,7 @@ import (
 	"github.com/mcp-ecosystem/mcp-gateway/internal/common/cnst"
 
 	"github.com/mcp-ecosystem/mcp-gateway/internal/common/config"
+	"github.com/mcp-ecosystem/mcp-gateway/internal/core/mcpproxy"
 	"github.com/mcp-ecosystem/mcp-gateway/internal/mcp/session"
 	"github.com/mcp-ecosystem/mcp-gateway/internal/mcp/storage/helper"
 	"github.com/mcp-ecosystem/mcp-gateway/pkg/mcp"
@@ -41,6 +42,7 @@ type (
 		prefixToRouterConfig    map[string]*config.RouterConfig
 		prefixToMCPServerConfig map[string]config.MCPServerConfig
 		prefixToProtoType       map[string]cnst.ProtoType
+		prefixToTransport       map[string]mcpproxy.Transport
 	}
 )
 
@@ -63,6 +65,7 @@ func NewServer(logger *zap.Logger, cfg *config.MCPGatewayConfig) (*Server, error
 			prefixToRouterConfig:    make(map[string]*config.RouterConfig),
 			prefixToMCPServerConfig: make(map[string]config.MCPServerConfig),
 			prefixToProtoType:       make(map[string]cnst.ProtoType),
+			prefixToTransport:       make(map[string]mcpproxy.Transport),
 		},
 		sessions:        sessionStore,
 		shutdownCh:      make(chan struct{}),
@@ -85,7 +88,7 @@ func (s *Server) RegisterRoutes(router *gin.Engine, cfgs []*config.MCPConfig) er
 
 	// Create new state and load configuration
 	s.logger.Debug("initializing server state")
-	newState, err := initState(cfgs)
+	newState, err := initState(cfgs, s.state)
 	if err != nil {
 		s.logger.Error("failed to initialize server state",
 			zap.Error(err))
@@ -122,7 +125,6 @@ func (s *Server) handleRoot(c *gin.Context) {
 	endpoint := parts[len(parts)-1]
 	prefix := "/" + strings.Join(parts[:len(parts)-1], "/")
 
-	// 记录请求路由信息
 	s.logger.Debug("routing request",
 		zap.String("path", path),
 		zap.String("prefix", prefix),
@@ -182,7 +184,7 @@ func (s *Server) Shutdown(_ context.Context) error {
 }
 
 // initState creates a new serverState from the given configuration
-func initState(cfgs []*config.MCPConfig) (*serverState, error) {
+func initState(cfgs []*config.MCPConfig, oldState *serverState) (*serverState, error) {
 	// Create new state
 	newState := &serverState{
 		rawConfigs:              cfgs,
@@ -193,6 +195,7 @@ func initState(cfgs []*config.MCPConfig) (*serverState, error) {
 		prefixToRouterConfig:    make(map[string]*config.RouterConfig),
 		prefixToMCPServerConfig: make(map[string]config.MCPServerConfig),
 		prefixToProtoType:       make(map[string]cnst.ProtoType),
+		prefixToTransport:       make(map[string]mcpproxy.Transport),
 	}
 
 	for idx := range cfgs {
@@ -241,6 +244,42 @@ func initState(cfgs []*config.MCPConfig) (*serverState, error) {
 			// Map prefix to MCP server config
 			newState.prefixToMCPServerConfig[prefix] = mcpServer
 
+			// Check if we already have transport with the same configuration
+			var transport mcpproxy.Transport
+			if oldState != nil {
+				if oldTransport, exists := oldState.prefixToTransport[prefix]; exists {
+					// Compare configurations to see if we need to create a new transport
+					oldConfig := oldState.prefixToMCPServerConfig[prefix]
+					if oldConfig.Type == mcpServer.Type &&
+						oldConfig.Command == mcpServer.Command &&
+						oldConfig.URL == mcpServer.URL &&
+						len(oldConfig.Args) == len(mcpServer.Args) {
+						// Compare args
+						argsMatch := true
+						for i, arg := range oldConfig.Args {
+							if arg != mcpServer.Args[i] {
+								argsMatch = false
+								break
+							}
+						}
+						if argsMatch {
+							// Reuse existing transport
+							transport = oldTransport
+						}
+					}
+				}
+			}
+
+			// Create new transport if needed
+			if transport == nil {
+				var err error
+				transport, err = mcpproxy.NewTransport(mcpServer)
+				if err != nil {
+					return nil, fmt.Errorf("failed to create transport for server %s: %w", mcpServer.Name, err)
+				}
+			}
+			newState.prefixToTransport[prefix] = transport
+
 			// Map protocol type based on server type
 			switch mcpServer.Type {
 			case "stdio":
@@ -268,7 +307,7 @@ func (s *Server) UpdateConfig(cfgs []*config.MCPConfig) error {
 
 	// Create new state and load configuration
 	s.logger.Info("updating server configuration")
-	newState, err := initState(cfgs)
+	newState, err := initState(cfgs, s.state)
 	if err != nil {
 		s.logger.Error("failed to initialize state during update",
 			zap.Error(err))
@@ -308,14 +347,14 @@ func (s *Server) MergeConfig(cfg *config.MCPConfig) error {
 
 	// Create new state and load configuration
 	s.logger.Debug("initializing state with merged configuration")
-	newState, err := initState(newConfig)
+	newState, err := initState(newConfig, s.state)
 	if err != nil {
 		s.logger.Error("failed to initialize state with merged configuration",
 			zap.Error(err))
 		return fmt.Errorf("failed to load configuration: %w", err)
 	}
 
-	// 记录配置合并信息
+	// Record configuration merge information
 	s.logger.Info("configuration merged successfully",
 		zap.Int("server_count", len(newState.prefixToServerConfig)),
 		zap.Int("tool_count", len(newState.toolMap)),
