@@ -5,7 +5,7 @@ import { configureMonacoYaml } from 'monaco-yaml';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { getMCPServers, createMCPServer, updateMCPServer, deleteMCPServer, syncMCPServers, getUserAuthorizedTenants, getTenant } from '../../services/api';
+import { getMCPServers, createMCPServer, updateMCPServer, deleteMCPServer, exportMCPServer, syncMCPServers, getUserAuthorizedTenants, getTenant } from '../../services/api';
 import { toast } from '../../utils/toast';
 
 import { ConfigEditor } from './components/ConfigEditor';
@@ -24,36 +24,6 @@ declare global {
       };
     };
   }
-}
-
-interface Gateway {
-  name: string;
-  config: string;
-  parsedConfig?: {
-    routers: Array<{
-      server: string;
-      prefix: string;
-    }>;
-    servers: Array<{
-      name: string;
-      namespace: string;
-      description: string;
-      allowedTools: string[];
-    }>;
-    tools: Array<{
-      name: string;
-      description: string;
-      method: string;
-    }>;
-    mcpServers?: Array<{
-      type: string;
-      name: string;
-      command?: string;
-      args?: string[];
-      env?: Record<string, string>;
-      url?: string;
-    }>;
-  };
 }
 
 interface ServerConfig {
@@ -267,6 +237,16 @@ export function GatewayManager() {
       toast.success(t('gateway.delete_success'));
     } catch {
       toast.error(t('gateway.delete_failed'));
+    }
+  };
+
+   const handleExport = async (server: Gateway) => {
+    try {
+      toast.success(t('gateway.exporting'));
+      await exportMCPServer(server);
+      toast.success(t('gateway.export_success'));
+    } catch {
+      toast.error(t('gateway.export_failed'));
     }
   };
 
@@ -566,6 +546,15 @@ export function GatewayManager() {
                           onPress={() => handleDelete(server)}
                         >
                           {t('gateway.delete')}
+                        </DropdownItem>
+                        <DropdownItem
+                          key="export"
+                          className="text-green-500"
+                          color="primary"
+                          startContent={<Icon icon="lucide:download" />}
+                          onPress={() => handleExport(server)}
+                        >
+                          {t('gateway.export')}
                         </DropdownItem>
                       </DropdownMenu>
                     </Dropdown>
