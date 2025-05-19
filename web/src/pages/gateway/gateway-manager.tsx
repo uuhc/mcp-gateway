@@ -11,6 +11,7 @@ import { getMCPServers, createMCPServer, updateMCPServer, deleteMCPServer, syncM
 import { toast } from '../../utils/toast';
 
 import OpenAPIImport from './components/OpenAPIImport';
+import type { Gateway } from '../../types/gateway';
 
 declare global {
   interface Window {
