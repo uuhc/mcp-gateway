@@ -7,11 +7,11 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/apiserver/database"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/auth/jwt"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/config"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/dto"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/i18n"
+	"github.com/amoylab/unla/internal/apiserver/database"
+	"github.com/amoylab/unla/internal/auth/jwt"
+	"github.com/amoylab/unla/internal/common/config"
+	"github.com/amoylab/unla/internal/common/dto"
+	"github.com/amoylab/unla/internal/i18n"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )

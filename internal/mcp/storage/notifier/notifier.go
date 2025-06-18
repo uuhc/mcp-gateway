@@ -3,7 +3,7 @@ package notifier
 import (
 	"context"
 
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/config"
+	"github.com/amoylab/unla/internal/common/config"
 )
 
 // Notifier defines the interface for configuration update notification

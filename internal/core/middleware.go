@@ -6,10 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/config"
+	"github.com/amoylab/unla/internal/common/config"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/auth"
 	"go.uber.org/zap"
 )
 
@@ -126,20 +125,6 @@ func (s *Server) recoveryMiddleware() gin.HandlerFunc {
 	}
 }
 
-// authMiddleware authenticates incoming requests
-func (s *Server) authMiddleware(authenticator auth.Authenticator) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if err := authenticator.Authenticate(c.Request.Context(), c.Request); err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "unauthorized",
-			})
-			c.Abort()
-			return
-		}
-		c.Next()
-	}
-}
-
 // corsMiddleware handles CORS configuration
 func (s *Server) corsMiddleware(cors *config.CORSConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -153,7 +138,7 @@ func (s *Server) corsMiddleware(cors *config.CORSConfig) gin.HandlerFunc {
 		for _, allowedOrigin := range cors.AllowOrigins {
 			if allowedOrigin == "*" || origin == allowedOrigin {
 				allowed = true
-				c.Header("Access-Control-Allow-Origin", allowedOrigin)
+				c.Header("Access-Control-Allow-Origin", origin)
 				break
 			}
 		}

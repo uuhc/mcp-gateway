@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mcp-ecosystem/mcp-gateway/pkg/openapi"
+	"github.com/amoylab/unla/pkg/openapi"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )

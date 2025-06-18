@@ -3,7 +3,7 @@ package database
 import (
 	"fmt"
 
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/config"
+	"github.com/amoylab/unla/internal/common/config"
 )
 
 // NewDatabase creates a new database based on configuration

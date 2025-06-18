@@ -1,8 +1,10 @@
 import axios from 'axios';
 import {t} from 'i18next';
+import yaml from 'js-yaml';
 
 import i18n from '../i18n';
 import type {Gateway} from '../types/gateway';
+import type {MCPConfigVersionListResponse} from '../types/mcp';
 import {handleApiError} from '../utils/error-handler';
 import {toast} from '../utils/toast';
 
@@ -55,29 +57,17 @@ api.interceptors.response.use(
 export const getMCPServers = async (tenantId?: number) => {
   try {
     const params = tenantId ? { tenantId } : {};
-    const response = await api.get('/mcp-servers', { params });
-    // 处理数据，兼容直接返回和嵌套在 data 中的情况
-    return response.data.data || response.data;
+    const response = await api.get('/mcp/configs', { params });
+    return response.data.data;
   } catch (error) {
     handleApiError(error, 'errors.fetch_mcp_servers');
     throw error;
   }
 };
 
-export const getMCPServer = async (name: string) => {
-  try {
-    const response = await api.get(`/mcp-servers/${name}`);
-    // 处理数据，兼容直接返回和嵌套在 data 中的情况
-    return response.data.data || response.data;
-  } catch (error) {
-    handleApiError(error, 'errors.fetch_mcp_server');
-    throw error;
-  }
-};
-
 export const createMCPServer = async (config: string) => {
   try {
-    const response = await api.post('/mcp-servers', config, {
+    const response = await api.post('/mcp/configs', config, {
       headers: {
         'Content-Type': 'application/yaml',
       },
@@ -89,9 +79,9 @@ export const createMCPServer = async (config: string) => {
   }
 };
 
-export const updateMCPServer = async (name: string, config: string) => {
+export const updateMCPServer = async (config: string) => {
   try {
-    const response = await api.put(`/mcp-servers/${name}`, config, {
+    const response = await api.put(`/mcp/configs`, config, {
       headers: {
         'Content-Type': 'application/yaml',
       },
@@ -103,9 +93,9 @@ export const updateMCPServer = async (name: string, config: string) => {
   }
 };
 
-export const deleteMCPServer = async (name: string) => {
+export const deleteMCPServer = async (tenant: string, name: string) => {
   try {
-    const response = await api.delete(`/mcp-servers/${name}`);
+    const response = await api.delete(`/mcp/configs/${tenant}/${name}`);
     return response.data;
   } catch (error) {
     handleApiError(error, 'errors.delete_mcp_server');
@@ -115,14 +105,14 @@ export const deleteMCPServer = async (name: string) => {
 
 export const exportMCPServer = async (server: Gateway) => {
   try {
-    const name = server.name
-    const config = server.config
+    const name = server.name;
+    const config = yaml.dump(server);
 
     const blob = new Blob([config], { type: 'application/yaml' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
 
-    toast.info(t(url))
+    toast.info(t('gateway.exporting'));
     a.href = url;
     a.download = `${name}.yaml`;
     a.click();
@@ -135,7 +125,7 @@ export const exportMCPServer = async (server: Gateway) => {
 
 export const syncMCPServers = async () => {
   try {
-    const response = await api.post('/mcp-servers/sync');
+    const response = await api.post('/mcp/configs/sync');
     return response.data;
   } catch (error) {
     handleApiError(error, 'errors.sync_mcp_server');
@@ -151,7 +141,6 @@ export const getChatMessages = async (sessionId: string, page: number = 1, pageS
         pageSize,
       },
     });
-    // 处理数据，兼容直接返回和嵌套在 data 中的情况
     return response.data.data || response.data;
   } catch (error) {
     handleApiError(error, 'errors.fetch_chat_messages');
@@ -162,10 +151,19 @@ export const getChatMessages = async (sessionId: string, page: number = 1, pageS
 export const getChatSessions = async () => {
   try {
     const response = await api.get('/chat/sessions');
-    // 处理数据，兼容直接返回和嵌套在 data 中的情况
     return response.data.data || response.data;
   } catch (error) {
     handleApiError(error, 'errors.fetch_chat_sessions');
+    throw error;
+  }
+};
+
+export const deleteChatSession = async (sessionId: string) => {
+  try {
+    const response = await api.delete(`/chat/sessions/${sessionId}`);
+    return response.data.data || response.data;
+  } catch (error) {
+    handleApiError(error, 'errors.delete_chat_session');
     throw error;
   }
 };
@@ -191,7 +189,6 @@ export const importOpenAPI = async (file: File) => {
 export const getTenants = async () => {
   try {
     const response = await api.get('/auth/tenants');
-    // 处理数据，兼容直接返回和嵌套在 data 中的情况
     return response.data.data || response.data;
   } catch (error) {
     handleApiError(error, 'errors.fetch_tenants');
@@ -202,7 +199,6 @@ export const getTenants = async () => {
 export const getTenant = async (name: string) => {
   try {
     const response = await api.get(`/auth/tenants/${name}`);
-    // 处理数据，兼容直接返回和嵌套在 data 中的情况
     return response.data.data || response.data;
   } catch (error) {
     handleApiError(error, 'errors.fetch_tenant');
@@ -371,7 +367,6 @@ export const deleteTenant = async (name: string) => {
 export const getUsers = async () => {
   try {
     const response = await api.get('/auth/users');
-    // 处理数据，兼容直接返回和嵌套在 data 中的情况
     return response.data.data || response.data;
   } catch (error) {
     toast.error(t('errors.fetch_users'), {
@@ -384,7 +379,6 @@ export const getUsers = async () => {
 export const getUser = async (username: string) => {
   try {
     const response = await api.get(`/auth/users/${username}`);
-    // 处理数据，兼容直接返回和嵌套在 data 中的情况
     return response.data.data || response.data;
   } catch (error) {
     toast.error(t('errors.fetch_user'), {
@@ -472,7 +466,6 @@ export const toggleUserStatus = async (username: string, isActive: boolean) => {
 export const getUserWithTenants = async (username: string) => {
   try {
     const response = await api.get(`/auth/users/${username}`);
-    // 处理数据，兼容直接返回和嵌套在 data 中的情况
     return response.data.data || response.data;
   } catch (error) {
     toast.error(t('errors.fetch_user'), {
@@ -486,7 +479,6 @@ export const getUserWithTenants = async (username: string) => {
 export const getUserAuthorizedTenants = async () => {
   try {
     const response = await api.get('/auth/user');
-    // 处理数据，兼容直接返回和嵌套在 data 中的情况
     const data = response.data.data || response.data;
     return data.tenants || [];
   } catch (error) {
@@ -512,6 +504,62 @@ export const updateUserTenants = async (userId: number, tenantIds: number[]) => 
     toast.error(t('users.update_tenants_failed'), {
       duration: 3000,
     });
+    throw error;
+  }
+};
+
+// MCP Config Version APIs
+export const getMCPConfigNames = async (tenant?: string): Promise<string[]> => {
+  try {
+    const response = await api.get('/mcp/configs/names', {
+      params: {
+        includeDeleted: true,
+        tenant
+      }
+    });
+    return response.data.data || [];
+  } catch (error) {
+    handleApiError(error, 'errors.fetch_config_names');
+    throw error;
+  }
+};
+
+export const getMCPConfigVersions = async (tenant?: string, name?: string): Promise<MCPConfigVersionListResponse> => {
+  try {
+    const params: Record<string, string> = {};
+    if (tenant) {
+      params.tenant = tenant;
+    }
+    if (name) {
+      params.names = name;
+    }
+    const response = await api.get('/mcp/configs/versions', { params });
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'errors.fetch_config_versions');
+    throw error;
+  }
+};
+
+export const setActiveVersion = async (tenant: string, name: string, version: number): Promise<void> => {
+  try {
+    await api.post(`/mcp/configs/${tenant}/${name}/versions/${version}/active`);
+  } catch (error) {
+    handleApiError(error, 'errors.set_active_version');
+    throw error;
+  }
+};
+
+export const getCurrentUser = async () => {
+  return await api.get('/auth/user/info');
+};
+
+export const updateChatSessionTitle = async (sessionId: string, title: string) => {
+  try {
+    const response = await api.put(`/chat/sessions/${sessionId}/title`, { title });
+    return response.data.data || response.data;
+  } catch (error) {
+    handleApiError(error, 'errors.rename_chat_session');
     throw error;
   }
 };

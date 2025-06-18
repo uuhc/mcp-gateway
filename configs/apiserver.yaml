@@ -3,7 +3,7 @@ logger:
   level: "${APISERVER_LOGGER_LEVEL:info}"                                         # debug, info, warn, error
   format: "${APISERVER_LOGGER_FORMAT:console}"                                    # json, console
   output: "${APISERVER_LOGGER_OUTPUT:stdout}"                                     # stdout, file
-  file_path: "${APISERVER_LOGGER_FILE_PATH:/var/log/mcp-gateway/apiserver.log}"   # path to log file when output is file
+  file_path: "${APISERVER_LOGGER_FILE_PATH:/var/log/unla/apiserver.log}"   # path to log file when output is file
   max_size: ${APISERVER_LOGGER_MAX_SIZE:100}                                      # max size of log file in MB
   max_backups: ${APISERVER_LOGGER_MAX_BACKUPS:3}                                  # max number of backup files
   max_age: ${APISERVER_LOGGER_MAX_AGE:7}                                          # max age of backup files in days
@@ -26,12 +26,13 @@ database:
   port: ${APISERVER_DB_PORT:5432}
   user: "${APISERVER_DB_USER:postgres}"
   password: "${APISERVER_DB_PASSWORD:example}"
-  dbname: "${APISERVER_DB_NAME:./mcp-gateway.db}"
+  dbname: "${APISERVER_DB_NAME:./unla.db}"
   sslmode: "${APISERVER_DB_SSL_MODE:disable}"
 
 # Storage configuration
 storage:
   type: "${GATEWAY_STORAGE_TYPE:db}"  # disk or db
+  revision_history_limit: ${GATEWAY_STORAGE_REVISION_HISTORY_LIMIT:10}  # number of versions to keep
   # Database configuration (only used when type is db)
   database:
     type: "${GATEWAY_DB_TYPE:sqlite}"
@@ -39,7 +40,7 @@ storage:
     port: ${GATEWAY_DB_PORT:5432}
     user: "${GATEWAY_DB_USER:postgres}"
     password: "${GATEWAY_DB_PASSWORD:example}"
-    dbname: "${GATEWAY_DB_NAME:./data/mcp-gateway.db}"
+    dbname: "${GATEWAY_DB_NAME:./unla.db}"
     sslmode: "${GATEWAY_DB_SSL_MODE:disable}"
   # Disk configuration (only used when type is disk)
   disk:

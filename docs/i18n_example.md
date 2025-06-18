@@ -12,8 +12,8 @@
 // 导入必要的包
 import (
     "github.com/gin-gonic/gin"
-    "github.com/mcp-ecosystem/mcp-gateway/internal/apiserver/middleware"
-    "github.com/mcp-ecosystem/mcp-gateway/pkg/i18n"
+    "github.com/amoylab/unla/internal/apiserver/middleware"
+    "github.com/amoylab/unla/pkg/i18n"
 )
 
 // 简单的错误

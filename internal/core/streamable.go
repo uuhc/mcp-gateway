@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/cnst"
-	"github.com/mcp-ecosystem/mcp-gateway/pkg/version"
+	"github.com/amoylab/unla/internal/common/cnst"
+	"github.com/amoylab/unla/pkg/version"
 
+	"github.com/amoylab/unla/internal/mcp/session"
+	"github.com/amoylab/unla/pkg/mcp"
 	"github.com/google/uuid"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/mcp/session"
-	"github.com/mcp-ecosystem/mcp-gateway/pkg/mcp"
 	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
@@ -208,8 +208,8 @@ func (s *Server) handleMCPRequest(c *gin.Context, req mcp.JSONRPCRequest, conn s
 		return
 
 	case mcp.ToolsList:
-		protoType, ok := s.state.prefixToProtoType[conn.Meta().Prefix]
-		if !ok {
+		protoType := s.state.GetProtoType(conn.Meta().Prefix)
+		if protoType == "" {
 			s.sendProtocolError(c, req.Id, "Server configuration not found", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
 			return
 		}
@@ -219,37 +219,13 @@ func (s *Server) handleMCPRequest(c *gin.Context, req mcp.JSONRPCRequest, conn s
 		switch protoType {
 		case cnst.BackendProtoHttp:
 			// Get tools for HTTP backend
-			tools, ok = s.state.prefixToTools[conn.Meta().Prefix]
-			if !ok {
+			tools = s.state.GetToolSchemas(conn.Meta().Prefix)
+			if len(tools) == 0 {
 				tools = []mcp.ToolSchema{}
 			}
-		case cnst.BackendProtoStdio:
-			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
-			if !ok {
-				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
-				return
-			}
-
-			tools, err = transport.FetchTools(c.Request.Context())
-			if err != nil {
-				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
-				return
-			}
-		case cnst.BackendProtoSSE:
-			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
-			if !ok {
-				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
-				return
-			}
-
-			tools, err = transport.FetchTools(c.Request.Context())
-			if err != nil {
-				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
-				return
-			}
-		case cnst.BackendProtoStreamable:
-			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
-			if !ok {
+		case cnst.BackendProtoStdio, cnst.BackendProtoSSE, cnst.BackendProtoStreamable:
+			transport := s.state.GetTransport(conn.Meta().Prefix)
+			if transport == nil {
 				s.sendProtocolError(c, req.Id, "Failed to fetch tools", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
 				return
 			}
@@ -270,8 +246,8 @@ func (s *Server) handleMCPRequest(c *gin.Context, req mcp.JSONRPCRequest, conn s
 		return
 
 	case mcp.ToolsCall:
-		protoType, ok := s.state.prefixToProtoType[conn.Meta().Prefix]
-		if !ok {
+		protoType := s.state.GetProtoType(conn.Meta().Prefix)
+		if protoType == "" {
 			s.sendProtocolError(c, req.Id, "Server configuration not found", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
 			return
 		}
@@ -289,63 +265,10 @@ func (s *Server) handleMCPRequest(c *gin.Context, req mcp.JSONRPCRequest, conn s
 		)
 		switch protoType {
 		case cnst.BackendProtoHttp:
-			// For HTTP backend, use the existing HTTP tool invocation logic
-			tool, exists := s.state.toolMap[params.Name]
-			if !exists {
-				s.sendProtocolError(c, req.Id, "Tool not found", http.StatusNotFound, mcp.ErrorCodeMethodNotFound)
-				return
-			}
-
-			// Convert arguments to map[string]any
-			var args map[string]any
-			if err := json.Unmarshal(params.Arguments, &args); err != nil {
-				s.sendProtocolError(c, req.Id, "Invalid tool arguments", http.StatusBadRequest, mcp.ErrorCodeInvalidParams)
-				return
-			}
-
-			// Get server configuration
-			serverCfg, ok := s.state.prefixToServerConfig[conn.Meta().Prefix]
-			if !ok {
-				s.sendProtocolError(c, req.Id, "Server config not found", http.StatusInternalServerError, mcp.ErrorCodeInternalError)
-				return
-			}
-
-			// Execute the tool
-			result, err = s.executeHTTPTool(conn, tool, args, c.Request, serverCfg.Config)
-			if err != nil {
-				s.logger.Error("failed to execute tool", zap.Error(err))
-				s.sendToolExecutionError(c, conn, req, err, false)
-				return
-			}
-		case cnst.BackendProtoStdio:
-			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
-			if !ok {
-				errMsg := "Server configuration not found"
-				s.sendProtocolError(c, req.Id, errMsg, http.StatusNotFound, mcp.ErrorCodeMethodNotFound)
-				return
-			}
-
-			result, err = transport.CallTool(c.Request.Context(), params, mergeRequestInfo(conn.Meta().Request, c.Request))
-			if err != nil {
-				s.sendToolExecutionError(c, conn, req, err, true)
-				return
-			}
-		case cnst.BackendProtoSSE:
-			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
-			if !ok {
-				errMsg := "Server configuration not found"
-				s.sendProtocolError(c, req.Id, errMsg, http.StatusNotFound, mcp.ErrorCodeMethodNotFound)
-				return
-			}
-
-			result, err = transport.CallTool(c.Request.Context(), params, mergeRequestInfo(conn.Meta().Request, c.Request))
-			if err != nil {
-				s.sendToolExecutionError(c, conn, req, err, true)
-				return
-			}
-		case cnst.BackendProtoStreamable:
-			transport, ok := s.state.prefixToTransport[conn.Meta().Prefix]
-			if !ok {
+			result = s.callHTTPTool(c, req, conn, params)
+		case cnst.BackendProtoStdio, cnst.BackendProtoSSE, cnst.BackendProtoStreamable:
+			transport := s.state.GetTransport(conn.Meta().Prefix)
+			if transport == nil {
 				errMsg := "Server configuration not found"
 				s.sendProtocolError(c, req.Id, errMsg, http.StatusNotFound, mcp.ErrorCodeMethodNotFound)
 				return

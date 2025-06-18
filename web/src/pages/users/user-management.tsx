@@ -15,49 +15,16 @@ import {
   Select,
   SelectItem,
   Switch,
-  Chip,
-  Autocomplete,
-  AutocompleteItem,
+  Modal,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AccessibleModal } from "../../components/AccessibleModal";
+import { MultiSelectAutocomplete } from "../../components/ui/MultiSelectAutocomplete";
 import { getUsers, createUser, updateUser, deleteUser, toggleUserStatus, getTenants, getUserWithTenants } from '../../services/api';
-
-interface User {
-  id: number;
-  username: string;
-  role: 'admin' | 'normal';
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  tenants?: Tenant[];
-}
-
-interface Tenant {
-  id: number;
-  name: string;
-  prefix: string;
-  description: string;
-  isActive: boolean;
-}
-
-interface CreateUserForm {
-  username: string;
-  password: string;
-  role: 'admin' | 'normal';
-  tenantIds?: number[];
-}
-
-interface UpdateUserForm {
-  username: string;
-  password?: string;
-  role?: 'admin' | 'normal';
-  isActive?: boolean;
-  tenantIds?: number[];
-}
+import {User, Tenant, CreateUserForm, UpdateUserForm} from '../../types/user';
 
 export function UserManagement() {
   const { t } = useTranslation();
@@ -66,8 +33,6 @@ export function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userToDelete, setUserToDelete] = useState<string>('');
-  const [createTenantInputValue, setCreateTenantInputValue] = useState('');
-  const [updateTenantInputValue, setUpdateTenantInputValue] = useState('');
   const [createForm, setCreateForm] = useState<CreateUserForm>({
     username: '',
     password: '',
@@ -193,56 +158,44 @@ export function UserManagement() {
     return map;
   }, [tenants]);
 
-  // Handle tenant selection for Autocomplete component
-  const handleCreateTenantSelect = (key: React.Key | null) => {
-    if (key === null) return;
-    
-    const tenantId = parseInt(key.toString(), 10);
-    // Ensure no duplicate entries
-    if (!createForm.tenantIds?.includes(tenantId)) {
-      setCreateForm({
-        ...createForm,
-        tenantIds: [...(createForm.tenantIds || []), tenantId]
-      });
-      // Clear input after selection
-      setCreateTenantInputValue('');
-    }
-  };
+  // Get tenant items for MultiSelectAutocomplete
+  const getTenantItems = useCallback(() => {
+    return tenants
+      .filter(tenant => tenant.isActive)
+      .map(tenant => `${tenant.name}(${tenant.prefix})`);
+  }, [tenants]);
 
-  const handleUpdateTenantSelect = (key: React.Key | null) => {
-    if (key === null) return;
-    
-    const tenantId = parseInt(key.toString(), 10);
-    // Ensure no duplicate entries
-    if (!updateForm.tenantIds?.includes(tenantId)) {
-      setUpdateForm({
-        ...updateForm,
-        tenantIds: [...(updateForm.tenantIds || []), tenantId]
-      });
-      // Clear input after selection
-      setUpdateTenantInputValue('');
-    }
-  };
+  // Get selected tenant items for MultiSelectAutocomplete
+  const getSelectedTenantItems = useCallback((tenantIds: number[] = []) => {
+    return tenantIds.map(id => {
+      const tenant = tenantsMap.get(id);
+      return tenant ? `${tenant.name}(${tenant.prefix})` : '';
+    }).filter(Boolean);
+  }, [tenantsMap]);
 
-  // Remove selected tenant
-  const handleRemoveCreateTenant = (tenantId: number) => {
+  // Handle tenant selection for MultiSelectAutocomplete component
+  const handleCreateTenantSelect = (selectedTenantNames: string[]) => {
+    const tenantIds = selectedTenantNames.map(name => {
+      const tenant = tenants.find(t => `${t.name}(${t.prefix})` === name);
+      return tenant?.id;
+    }).filter((id): id is number => id !== undefined);
+    
     setCreateForm({
       ...createForm,
-      tenantIds: createForm.tenantIds?.filter(id => id !== tenantId) || []
+      tenantIds
     });
   };
 
-  const handleRemoveUpdateTenant = (tenantId: number) => {
+  const handleUpdateTenantSelect = (selectedTenantNames: string[]) => {
+    const tenantIds = selectedTenantNames.map(name => {
+      const tenant = tenants.find(t => `${t.name}(${t.prefix})` === name);
+      return tenant?.id;
+    }).filter((id): id is number => id !== undefined);
+    
     setUpdateForm({
       ...updateForm,
-      tenantIds: updateForm.tenantIds?.filter(id => id !== tenantId) || []
+      tenantIds
     });
-  };
-
-  // Get tenant display text
-  const getTenantDisplayText = (tenantId: number) => {
-    const tenant = tenantsMap.get(tenantId);
-    return tenant ? `${tenant.name}(${tenant.prefix})` : '';
   };
 
   return (
@@ -362,43 +315,15 @@ export function UserManagement() {
               {/* Tenant selection section */}
               {createForm.role === 'normal' && (
                 <div className="mt-2">
-                  <label className="block text-sm font-medium mb-1">{t('users.select_tenants')}</label>
-                  
-                  <Autocomplete
-                    selectedKey={null}
-                    placeholder={t('users.select_tenant')}
-                    variant="bordered"
+                  <MultiSelectAutocomplete
+                    items={getTenantItems()}
+                    label={t('users.select_tenants')}
+                    selectedItems={getSelectedTenantItems(createForm.tenantIds)}
                     onSelectionChange={handleCreateTenantSelect}
-                    onInputChange={setCreateTenantInputValue}
-                    value={createTenantInputValue}
+                    placeholder={t('users.select_tenant')}
+                    allowCustomValues={false}
                     className="mb-4"
-                    aria-label={t('users.select_tenant')}
-                  >
-                    {tenants
-                      .filter(tenant => tenant.isActive) // Only show active tenants
-                      .map(tenant => (
-                        <AutocompleteItem 
-                          key={tenant.id}
-                          textValue={`${tenant.name}(${tenant.prefix})`}
-                        >
-                          {tenant.name}({tenant.prefix})
-                        </AutocompleteItem>
-                      ))}
-                  </Autocomplete>
-                  
-                  {/* Display selected tenants */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {createForm.tenantIds?.map(tenantId => (
-                      <Chip
-                        key={tenantId}
-                        onClose={() => handleRemoveCreateTenant(tenantId)}
-                        variant="bordered"
-                        className="mb-1"
-                      >
-                        {getTenantDisplayText(tenantId)}
-                      </Chip>
-                    ))}
-                  </div>
+                  />
                 </div>
               )}
             </div>
@@ -419,7 +344,7 @@ export function UserManagement() {
       </AccessibleModal>
 
       {/* Update User Modal */}
-      <AccessibleModal isOpen={isUpdateOpen} onClose={onUpdateClose} size="lg">
+      <Modal isOpen={isUpdateOpen} onClose={onUpdateClose} size="lg">
         <ModalContent>
           <ModalHeader>{t('users.edit')}</ModalHeader>
           <ModalBody>
@@ -467,43 +392,15 @@ export function UserManagement() {
               {/* Tenant selection section */}
               {updateForm.role === 'normal' && (
                 <div className="mt-2">
-                  <label className="block text-sm font-medium mb-1">{t('users.select_tenants')}</label>
-                  
-                  <Autocomplete
-                    selectedKey={null}
-                    placeholder={t('users.select_tenant')}
-                    variant="bordered"
+                  <MultiSelectAutocomplete
+                    items={getTenantItems()}
+                    label={t('users.select_tenants')}
+                    selectedItems={getSelectedTenantItems(updateForm.tenantIds)}
                     onSelectionChange={handleUpdateTenantSelect}
-                    onInputChange={setUpdateTenantInputValue}
-                    value={updateTenantInputValue}
+                    placeholder={t('users.select_tenant')}
+                    allowCustomValues={false}
                     className="mb-4"
-                    aria-label={t('users.select_tenant')}
-                  >
-                    {tenants
-                      .filter(tenant => tenant.isActive) // Only show active tenants
-                      .map(tenant => (
-                        <AutocompleteItem 
-                          key={tenant.id}
-                          textValue={`${tenant.name}(${tenant.prefix})`}
-                        >
-                          {tenant.name}({tenant.prefix})
-                        </AutocompleteItem>
-                      ))}
-                  </Autocomplete>
-                  
-                  {/* Display selected tenants */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {updateForm.tenantIds?.map(tenantId => (
-                      <Chip
-                        key={tenantId}
-                        onClose={() => handleRemoveUpdateTenant(tenantId)}
-                        variant="bordered"
-                        className="mb-1"
-                      >
-                        {getTenantDisplayText(tenantId)}
-                      </Chip>
-                    ))}
-                  </div>
+                  />
                 </div>
               )}
             </div>
@@ -517,7 +414,7 @@ export function UserManagement() {
             </Button>
           </ModalFooter>
         </ModalContent>
-      </AccessibleModal>
+      </Modal>
 
       {/* Delete Confirmation Modal */}
       <AccessibleModal isOpen={isDeleteOpen} onClose={onDeleteClose}>

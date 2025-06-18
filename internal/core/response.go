@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/mcp/session"
-	"github.com/mcp-ecosystem/mcp-gateway/pkg/mcp"
+	"github.com/amoylab/unla/internal/mcp/session"
+	"github.com/amoylab/unla/pkg/mcp"
 	"go.uber.org/zap"
 )
 

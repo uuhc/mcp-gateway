@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { Layout } from './components/Layout';
 import { LoginPage } from './pages/auth/login';
 import { ChatInterface } from './pages/chat/chat-interface';
+import { ConfigVersionsPage } from './pages/gateway/config-versions';
 import { GatewayManager } from './pages/gateway/gateway-manager';
 import { TenantManagement } from './pages/users/tenant-management';
 import { UserManagement } from './pages/users/user-management';
@@ -29,7 +30,10 @@ function MainLayout() {
         <Route path="/chat" element={<ChatInterface />} />
         <Route path="/chat/:sessionId" element={<ChatInterface />} />
         <Route path="/gateway/*" element={<GatewayManager />} />
-        <Route path="/users" element={<UserManagement />} />
+        <Route path="/gateway" element={<PrivateRoute><GatewayManager /></PrivateRoute>} />
+        <Route path="/gateway/configs/:name/versions" element={<PrivateRoute><ConfigVersionsPage /></PrivateRoute>} />
+        <Route path="/config-versions" element={<PrivateRoute><ConfigVersionsPage /></PrivateRoute>} />
+        <Route path="/users" element={<PrivateRoute><UserManagement /></PrivateRoute>} />
         <Route path="/tenants" element={<TenantManagement />} />
       </Routes>
     </Layout>
@@ -38,7 +42,10 @@ function MainLayout() {
 
 export default function App() {
   return (
-    <Router future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+    <Router 
+      basename={import.meta.env.VITE_BASE_URL}
+      future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
+    >
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route

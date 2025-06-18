@@ -7,20 +7,18 @@ import (
 	"os"
 	"time"
 
-	"github.com/mcp-ecosystem/mcp-gateway/internal/i18n"
-
-	"github.com/mcp-ecosystem/mcp-gateway/pkg/logger"
-
-	"github.com/mcp-ecosystem/mcp-gateway/internal/apiserver/database"
-	apiserverHandler "github.com/mcp-ecosystem/mcp-gateway/internal/apiserver/handler"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/apiserver/middleware"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/auth/jwt"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/cnst"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/config"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/mcp/storage"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/mcp/storage/notifier"
-	"github.com/mcp-ecosystem/mcp-gateway/pkg/openai"
-	"github.com/mcp-ecosystem/mcp-gateway/pkg/version"
+	"github.com/amoylab/unla/internal/apiserver/database"
+	apiserverHandler "github.com/amoylab/unla/internal/apiserver/handler"
+	"github.com/amoylab/unla/internal/apiserver/middleware"
+	"github.com/amoylab/unla/internal/auth/jwt"
+	"github.com/amoylab/unla/internal/common/cnst"
+	"github.com/amoylab/unla/internal/common/config"
+	"github.com/amoylab/unla/internal/i18n"
+	"github.com/amoylab/unla/internal/mcp/storage"
+	"github.com/amoylab/unla/internal/mcp/storage/notifier"
+	"github.com/amoylab/unla/pkg/logger"
+	"github.com/amoylab/unla/pkg/openai"
+	"github.com/amoylab/unla/pkg/version"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
@@ -50,7 +48,7 @@ var (
 )
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&configPath, "conf", "c", cnst.ApiServerYaml, "path to configuration file, like /etc/mcp-gateway/apiserver.yaml")
+	rootCmd.PersistentFlags().StringVarP(&configPath, "conf", "c", cnst.ApiServerYaml, "path to configuration file, like /etc/unla/apiserver.yaml")
 	rootCmd.AddCommand(versionCmd)
 }
 
@@ -174,6 +172,7 @@ func initRouter(db database.Database, store storage.Store, ntf notifier.Notifier
 		protected.POST("/auth/change-password", authH.ChangePassword)
 		protected.GET("/auth/user/info", authH.GetUserInfo)
 		protected.GET("/auth/user", authH.GetUserWithTenants)
+		protected.GET("/auth/tenants", authH.ListTenants)
 
 		// User management routes (admin only)
 		userMgmt := protected.Group("/auth/users")
@@ -189,27 +188,37 @@ func initRouter(db database.Database, store storage.Store, ntf notifier.Notifier
 
 		// Tenant management routes (admin only)
 		tenantMgmt := protected.Group("/auth/tenants")
-		tenantMgmt.Use(apiserverHandler.AdminAuthMiddleware())
 		{
-			tenantMgmt.GET("", authH.ListTenants)
 			tenantMgmt.POST("", authH.CreateTenant)
-			tenantMgmt.PUT("", authH.UpdateTenant)
-			tenantMgmt.DELETE("/:name", authH.DeleteTenant)
 			tenantMgmt.GET("/:name", authH.GetTenantInfo)
 		}
+		tenantMgmt.Use(apiserverHandler.AdminAuthMiddleware())
+		{
+			tenantMgmt.PUT("", authH.UpdateTenant)
+			tenantMgmt.DELETE("/:name", authH.DeleteTenant)
+		}
 
-		// Configure routes
-		protected.POST("/mcp-servers", mcpHandler.HandleMCPServerCreate)
-		protected.PUT("/mcp-servers/:name", mcpHandler.HandleMCPServerUpdate)
-		protected.GET("/mcp-servers", mcpHandler.HandleListMCPServers)
-		protected.DELETE("/mcp-servers/:name", mcpHandler.HandleMCPServerDelete)
-		protected.POST("/mcp-servers/sync", mcpHandler.HandleMCPServerSync)
+		// MCP config routes
+		mcpGroup := protected.Group("/mcp")
+		{
+			mcpGroup.GET("/configs/names", mcpHandler.HandleGetConfigNames)
+			mcpGroup.GET("/configs/versions", mcpHandler.HandleGetConfigVersions)
+			mcpGroup.POST("/configs/:tenant/:name/versions/:version/active", mcpHandler.HandleSetActiveVersion)
+
+			mcpGroup.GET("/configs", mcpHandler.HandleListMCPServers)
+			mcpGroup.POST("/configs", mcpHandler.HandleMCPServerCreate)
+			mcpGroup.PUT("/configs", mcpHandler.HandleMCPServerUpdate)
+			mcpGroup.DELETE("/configs/:tenant/:name", mcpHandler.HandleMCPServerDelete)
+			mcpGroup.POST("/configs/sync", mcpHandler.HandleMCPServerSync)
+		}
 
 		// OpenAPI routes
 		protected.POST("/openapi/import", openapiHandler.HandleImport)
 
 		protected.GET("/chat/sessions", chatHandler.HandleGetChatSessions)
 		protected.GET("/chat/sessions/:sessionId/messages", chatHandler.HandleGetChatMessages)
+		protected.DELETE("/chat/sessions/:sessionId", chatHandler.HandleDeleteChatSession)
+		protected.PUT("/chat/sessions/:sessionId/title", chatHandler.HandleUpdateChatSessionTitle)
 	}
 
 	wsHandler := apiserverHandler.NewWebSocket(db, openaiClient, jwtService, logger)

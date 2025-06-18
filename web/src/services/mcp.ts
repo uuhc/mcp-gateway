@@ -1,15 +1,15 @@
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import {Client} from '@modelcontextprotocol/sdk/client/index.js';
+import {StreamableHTTPClientTransport} from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import {
-  LoggingMessageNotificationSchema,
-  type LoggingMessageNotification,
   type CallToolRequest,
-  CallToolResultSchema
+  CallToolResultSchema,
+  type LoggingMessageNotification,
+  LoggingMessageNotificationSchema
 } from '@modelcontextprotocol/sdk/types.js';
 
-import { Tool } from '../types/mcp';
-import { t } from '../utils/i18n-utils';
-import { toast } from '../utils/toast';
+import {Tool} from '../types/mcp';
+import {t} from '../utils/i18n-utils';
+import {toast} from '../utils/toast';
 
 
 // Declare global constant injected by Vite
@@ -61,7 +61,7 @@ class MCPService {
       );
 
       const client = new Client({
-        name: 'mcp-gateway-web',
+        name: 'unla-web',
         version: __APP_VERSION__
       });
 

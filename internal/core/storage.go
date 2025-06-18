@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Storage defines the interface for storing runtime data
+// Storage defines the interface for storing runtimeUnit data
 type Storage interface {
 	// SaveTool saves a tool configuration
 	SaveTool(ctx context.Context, tool *Tool) error
@@ -49,7 +49,6 @@ type Tool struct {
 // StoredServer represents a server in storage
 type StoredServer struct {
 	Name           string    `json:"name"`
-	Namespace      string    `json:"namespace"`
 	Description    string    `json:"description"`
 	Auth           Auth      `json:"auth"`
 	AllowedTools   []string  `json:"allowedTools"`

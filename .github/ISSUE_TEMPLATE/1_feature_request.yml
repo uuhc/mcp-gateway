@@ -9,9 +9,9 @@ body:
       label: "⚠️ Verification"
       description: "Please verify that you've done the following:"
       options:
-        - label: I have searched the [issues](https://github.com/mcp-ecosystem/mcp-gateway/issues) of this repository and believe that this is not a duplicate.
+        - label: I have searched the [issues](https://github.com/amoylab/unla/issues) of this repository and believe that this is not a duplicate.
           required: true
-        - label: I have searched the [release notes](https://github.com/mcp-ecosystem/mcp-gateway/releases) of this repository and believe that this is not a duplicate.
+        - label: I have searched the [release notes](https://github.com/amoylab/unla/releases) of this repository and believe that this is not a duplicate.
           required: true
 
   - type: textarea

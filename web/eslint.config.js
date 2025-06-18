@@ -45,6 +45,9 @@ export default [
         File: 'readonly',
         FileReader: 'readonly',
         Blob: 'readonly',
+        HTMLInputElement: 'readonly',
+        MutationObserver: 'readonly',
+        MutationRecord: 'readonly',
       }
     },
     plugins: {

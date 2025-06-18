@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/config"
+	"github.com/amoylab/unla/internal/common/config"
 	"go.uber.org/zap"
 )
 

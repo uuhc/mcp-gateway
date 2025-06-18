@@ -2,14 +2,14 @@ package notifier
 
 import (
 	"context"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/cnst"
+	"github.com/amoylab/unla/internal/common/cnst"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/config"
-	"github.com/mcp-ecosystem/mcp-gateway/pkg/utils"
+	"github.com/amoylab/unla/internal/common/config"
+	"github.com/amoylab/unla/pkg/utils"
 	"go.uber.org/zap"
 )
 

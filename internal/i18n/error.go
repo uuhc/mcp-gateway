@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/cnst"
+	"github.com/amoylab/unla/internal/common/cnst"
 )
 
 // ErrorCode represents an HTTP status code

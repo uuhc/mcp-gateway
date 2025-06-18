@@ -1,13 +1,15 @@
-# MCP Gateway
+# Unla - MCP Gateway
 
 > 🚀 将现有 MCP Servers 和 APIs 快速转化为 [MCP](https://modelcontextprotocol.io/) 服务，无需改动任何一行代码。
 
 [![English](https://img.shields.io/badge/English-Click-yellow)](../README.md)
 [![简体中文](https://img.shields.io/badge/简体中文-点击查看-orange)](README.zh-CN.md)
-[![Release](https://img.shields.io/github/v/release/mcp-ecosystem/mcp-gateway)](https://github.com/mcp-ecosystem/mcp-gateway/releases)
+[![Release](https://img.shields.io/github/v/release/mcp-ecosystem/mcp-gateway)](https://github.com/amoylab/unla/releases)
 [![文档](https://img.shields.io/badge/文档-在线阅读-blue)](https://mcp.ifuryst.com)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/mcp-ecosystem/mcp-gateway)
 [![Discord](https://img.shields.io/badge/Discord-加入讨论-5865F2?logo=discord&logoColor=white)](https://discord.gg/udf69cT9TY)
+[![Go Report Card](https://goreportcard.com/badge/github.com/amoylab/unla)](https://goreportcard.com/report/github.com/amoylab/unla)
+[![Snyk Security](https://img.shields.io/badge/Snyk-Secure-blueviolet?logo=snyk)](https://snyk.io/test/github/mcp-ecosystem/mcp-gateway)
 
 ---
 
@@ -21,13 +23,13 @@
 
 ---
 
-> ⚡ **注意**：MCP Gateway 正在快速迭代中！我们会尽力保证向下兼容，但无法百分百承诺兼容性。升级版本时一定要留意版本变更情况️。同时由于更新频繁，文档内容可能存在一定延迟，如遇问题欢迎通过 [Discord](https://discord.gg/udf69cT9TY) 或 [Issue](https://github.com/mcp-ecosystem/mcp-gateway/issues) 搜索和求助❤️
+> ⚡ **注意**：Unla 正在快速迭代中！我们会尽力保证向下兼容，但无法百分百承诺兼容性。升级版本时一定要留意版本变更情况️。同时由于更新频繁，文档内容可能存在一定延迟，如遇问题欢迎通过 [Discord](https://discord.gg/udf69cT9TY) 或 [Issue](https://github.com/amoylab/unla/issues) 搜索和求助❤️
 
 ---
 
-## ✨ MCP Gateway 是什么？
+## ✨ Unla 是什么？
 
-**MCP Gateway** 是一个用 Go 编写的轻量高可用网关服务，帮助个人与企业将已有的 MCP Servers 和 APIs 通过配置方式转换为符合 [MCP 协议](https://modelcontextprotocol.io/) 的服务，无需改动任何代码。
+**Unla** 是一个用 Go 编写的轻量高可用网关服务，帮助个人与企业将已有的 MCP Servers 和 APIs 通过配置方式转换为符合 [MCP 协议](https://modelcontextprotocol.io/) 的服务，无需改动任何代码。
 
 https://github.com/user-attachments/assets/69480eda-7aa7-4be7-9bc7-cae57fe16c54
 
@@ -42,9 +44,9 @@ https://github.com/user-attachments/assets/69480eda-7aa7-4be7-9bc7-cae57fe16c54
 
 ## 🚀 快速开始
 
-MCP Gateway 提供开箱即用的 Docker 启动方式。完整部署与配置说明请参考 [文档](https://mcp.ifuryst.com/getting-started/quick-start)。
+Unla 提供开箱即用的 Docker 启动方式。完整部署与配置说明请参考 [文档](https://mcp.ifuryst.com/getting-started/quick-start)。
 
-### 一键启动 MCP Gateway
+### 一键启动 Unla
 
 配置环境变量：
 
@@ -74,7 +76,7 @@ docker run -d \
   -e SUPER_ADMIN_USERNAME=${SUPER_ADMIN_USERNAME} \
   -e SUPER_ADMIN_PASSWORD=${SUPER_ADMIN_PASSWORD} \
   --restart unless-stopped \
-  ghcr.io/mcp-ecosystem/mcp-gateway/allinone:latest
+  ghcr.io/amoylab/unla/allinone:latest
 ```
 
 > 在中国境内的设备可以使用阿里云仓库的镜像并自定义模型（这边示例是千问）：
@@ -90,7 +92,7 @@ docker run -d \
 >
 > ```bash
 > docker run -d \
->   --name mcp-gateway \
+>   --name unla \
 >   -p 8080:80 \
 >   -p 5234:5234 \
 >   -p 5235:5235 \
@@ -105,7 +107,7 @@ docker run -d \
 >   -e SUPER_ADMIN_USERNAME=${SUPER_ADMIN_USERNAME} \
 >   -e SUPER_ADMIN_PASSWORD=${SUPER_ADMIN_PASSWORD} \
 >   --restart unless-stopped \
->   registry.ap-southeast-1.aliyuncs.com/mcp-ecosystem/mcp-gateway-allinone:latest
+>   registry.ap-southeast-1.aliyuncs.com/amoylab/unla-allinone:latest
 > ```
 
 ### 访问和配置
@@ -115,7 +117,7 @@ docker run -d \
    - 使用配置的管理员账号密码登录
 
 2. 添加 MCP Server：
-   - 复制配置文件：https://github.com/mcp-ecosystem/mcp-gateway/blob/main/configs/proxy-mock-server.yaml
+   - 复制配置文件：https://github.com/amoylab/unla/blob/main/configs/proxy-mock-server.yaml
    - 在 Web 界面上点击 "Add MCP Server"
    - 粘贴配置并保存
 
@@ -160,10 +162,10 @@ docker run -d \
 - [x] 自动配置拉取与无缝热重载
 - [x] 配置持久化支持(Disk/SQLite/PostgreSQL/MySQL)
 - [x] 支持配置更新同步机制(OS Signal/HTTP/Redis PubSub)
-- [ ] 配置版本控制
+- [x] 配置版本控制
 
 ### 🔐 安全与认证
-- [ ] MCP Server前置OAuth认证
+- [x] MCP Server前置OAuth认证
 
 ### 🖥 用户界面
 - [x] 直观轻量的管理界面
@@ -171,7 +173,7 @@ docker run -d \
 ### 📦 部署与运维
 - [x] 服务多副本支持
 - [x] Docker 支持
-- [ ] Kubernetes与Helm部署支持
+- [x] Kubernetes与Helm部署支持
 
 ---
 
@@ -189,11 +191,11 @@ docker run -d \
 
 ## 💬 加入社区微信群
 
-扫描下方二维码添加微信，备注：`mcp-gateway`或`mcpgw`
+扫描下方二维码添加微信，备注：`mcp-gateway`, `mcpgw`或`unla`
 
 <img src="../web/public/wechat-qrcode.png" alt="微信群二维码" width="350" height="350" />
 
 ## 📈 Star 历史
 
-[![Star History Chart](https://api.star-history.com/svg?repos=mcp-ecosystem/mcp-gateway&type=Date)](https://star-history.com/#mcp-ecosystem/mcp-gateway&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=AmoyLab/Unla&type=Date)](https://star-history.com/#AmoyLab/Unla&Date)
 

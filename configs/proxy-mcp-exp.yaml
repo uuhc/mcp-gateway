@@ -59,15 +59,16 @@ mcpServers:
       - "-y"
       - "@amap/amap-maps-mcp-server"
     env:
-      AMAP_MAPS_API_KEY: "{{ env AMAP_MAPS_API_KEY }}"
-    policy: "onStart"
+      AMAP_MAPS_API_KEY: '{{ env "AMAP_MAPS_API_KEY" }}'
+    policy: "onDemand"
+    preinstalled: true
 
   - type: "sse"
     name: "mock-user-sse"
-    url: "http://localhost:3000/mcp/user/sse"
+    url: "http://localhost:5237/sse"
     policy: "onDemand"
 
   - type: "streamable-http"  # unimplemented for now
     name: "mock-user-mcp"
-    url: "http://localhost:3000/mcp/user/mcp"
+    url: "http://localhost:5237/mcp"
     policy: "onDemand"

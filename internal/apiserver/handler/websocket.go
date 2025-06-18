@@ -6,17 +6,17 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/cnst"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/i18n"
+	"github.com/amoylab/unla/internal/common/cnst"
+	"github.com/amoylab/unla/internal/i18n"
 
 	"github.com/google/uuid"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/apiserver/database"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/dto"
-	"github.com/mcp-ecosystem/mcp-gateway/pkg/openai"
+	"github.com/amoylab/unla/internal/apiserver/database"
+	"github.com/amoylab/unla/internal/common/dto"
+	"github.com/amoylab/unla/pkg/openai"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/auth/jwt"
+	"github.com/amoylab/unla/internal/auth/jwt"
 	openaiGo "github.com/openai/openai-go"
 	"go.uber.org/zap"
 )

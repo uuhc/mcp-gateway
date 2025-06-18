@@ -1,62 +1,67 @@
 services:
   postgres:
-    image: ${POSTGRES_IMAGE:-postgres:16}
+    image: postgres:16
     environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: ${DB_NAME:-mcp_gateway}
-      TZ: ${TZ:-UTC}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "**********"
+      POSTGRES_DB: mcp-gateway
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
+      - ./db:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    restart: always
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis:/data
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    command: redis-server --appendonly yes --save "900 1" --save "300 10" --save "60 10000" --requirepass "**********"
+    restart: always
 
   web:
-    image: ${WEB_IMAGE:-ghcr.io/mcp-ecosystem/mcp-gateway/web:latest}
+    image: ghcr.io/amoylab/unla/web:latest
     ports:
-      - "80:80"
+      - "8080:80"
       - "5234:5234"
     environment:
       - ENV=production
-      - TZ=${TZ:-UTC}
+      - TZ=Asia/Shanghai
     volumes:
-      - ./configs:/app/configs
+      - ./.env:/app/.env
       - ./data:/app/data
-      - ./.env.multi:/app/.env
     depends_on:
       - postgres
       - mcp-gateway
       - mock-server
-    restart: unless-stopped
+    restart: always
 
   mcp-gateway:
-    image: ${MCP_GATEWAY_IMAGE:-ghcr.io/mcp-ecosystem/mcp-gateway/mcp-gateway:latest}
+    image: ghcr.io/amoylab/unla/mcp-gateway:latest
     ports:
       - "5235:5235"
     environment:
       - ENV=production
-      - TZ=${TZ:-UTC}
+      - TZ=Asia/Shanghai
     volumes:
-      - ./configs:/app/configs
+      - ./.env:/app/.env
       - ./data:/app/data
-      - ./.env.multi:/app/.env
     depends_on:
       - postgres
-    restart: unless-stopped
+    restart: always
 
   mock-server:
-    image: ${MOCK_USER_SVC_IMAGE:-ghcr.io/mcp-ecosystem/mcp-gateway/mock-server:latest}
+    image: ghcr.io/amoylab/unla/mock-server:latest
     ports:
       - "5236:5236"
     environment:
       - ENV=production
-      - TZ=${TZ:-UTC}
+      - TZ=Asia/Shanghai
     volumes:
-      - ./configs:/app/configs
-      - ./data:/app/data
-      - ./.env.multi:/app/.env
+      - ./.env:/app/.env
     depends_on:
       - postgres
-    restart: unless-stopped
-
-volumes:
-  postgres_data:
+    restart: always

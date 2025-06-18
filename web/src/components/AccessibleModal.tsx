@@ -1,6 +1,9 @@
 import { Modal, ModalProps } from "@heroui/react";
 import { useEffect, useRef } from "react";
 
+// Add type imports
+type Node = globalThis.Node;
+
 /**
  * AccessibleModal is a wrapper around HeroUI's Modal component that
  * prevents the application of aria-hidden to elements containing focus
@@ -18,7 +21,7 @@ export function AccessibleModal(props: ModalProps) {
         if (
           mutation.type === "attributes" &&
           mutation.attributeName === "aria-hidden" &&
-          mutation.target instanceof window.Element  // Changed to Element to handle SVG elements too
+          mutation.target instanceof window.Element
         ) {
           const target = mutation.target;
           
@@ -59,8 +62,18 @@ export function AccessibleModal(props: ModalProps) {
       subtree: true,
     });
 
+    // Prevent modal from closing when clicking inside
+    const handleClick = (e: MouseEvent) => {
+      if (containerRef.current?.contains(e.target as Node)) {
+        e.stopPropagation();
+      }
+    };
+
+    document.addEventListener('click', handleClick, true);
+
     return () => {
       observer.disconnect();
+      document.removeEventListener('click', handleClick, true);
       
       // Clean up any inert attributes we may have added
       if ('inert' in HTMLElement.prototype) {

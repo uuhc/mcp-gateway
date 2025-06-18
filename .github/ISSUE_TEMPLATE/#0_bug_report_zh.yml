@@ -9,7 +9,7 @@ body:
       label: "⚠️ 验证"
       description: "请确认您已经完成以下操作："
       options:
-        - label: 我已经搜索过 [issues](https://github.com/mcp-ecosystem/mcp-gateway/issues)，确信这不是一个重复的问题。
+        - label: 我已经搜索过 [issues](https://github.com/amoylab/unla/issues)，确信这不是一个重复的问题。
           required: true
 
   - type: markdown
@@ -26,10 +26,10 @@ body:
       required: true
 
   - type: input
-    id: gateway-version
+    id: unla-version
     attributes:
-      label: "mcp-gateway 版本"
-      description: "您使用的 mcp-gateway 版本"
+      label: "Unla 版本"
+      description: "您使用的 Unla 版本"
       placeholder: "v1.0.0"
     validations:
       required: true

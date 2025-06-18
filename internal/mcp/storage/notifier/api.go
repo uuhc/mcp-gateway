@@ -11,10 +11,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/cnst"
+	"github.com/amoylab/unla/internal/common/cnst"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/config"
+	"github.com/amoylab/unla/internal/common/config"
 	"go.uber.org/zap"
 )
 

@@ -10,7 +10,7 @@ import (
 // Priority:
 // 1. If filename is an absolute path, return it directly.
 // 2. Check ./{filename} and ./configs/{filename}
-// 3. Otherwise, fallback to /etc/mcp-gateway/{filename}
+// 3. Otherwise, fallback to /etc/unla/{filename}
 func GetCfgPath(filename string) string {
 	if filename == "" {
 		panic("filename cannot be empty")
@@ -26,7 +26,7 @@ func GetCfgPath(filename string) string {
 	}
 
 	// fallback
-	return filepath.Join("/etc/mcp-gateway", filename)
+	return filepath.Join("/etc/unla", filename)
 }
 
 func getCurrentDir(filename string) string {

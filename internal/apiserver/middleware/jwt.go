@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/auth/jwt"
+	"github.com/amoylab/unla/internal/auth/jwt"
 )
 
 // JWTAuthMiddleware creates a middleware that validates JWT tokens

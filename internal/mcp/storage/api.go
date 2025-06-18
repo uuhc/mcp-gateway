@@ -10,10 +10,14 @@ import (
 
 	"github.com/tidwall/gjson"
 
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/config"
+	"github.com/amoylab/unla/internal/common/config"
 
 	"go.uber.org/zap"
 )
+
+// Note: This APIStore is used to fetch MCP configuration from a remote server, it's not a universal use case,
+// if you want to use it, please make sure it's compatible with your server,
+// or you can easily modify it to fit your needs.
 
 // APIStore implements the Store interface using the remote http server
 type APIStore struct {
@@ -47,21 +51,21 @@ func (s *APIStore) Create(_ context.Context, server *config.MCPConfig) error {
 }
 
 // Get implements Store.Get
-func (s *APIStore) Get(_ context.Context, name string) (*config.MCPConfig, error) {
+func (s *APIStore) Get(_ context.Context, tenant, name string, includeDeleted ...bool) (*config.MCPConfig, error) {
 	jsonStr, err := s.request()
 	if err != nil {
 		return nil, err
 	}
-	var config config.MCPConfig
-	err = json.Unmarshal([]byte(jsonStr), &config)
+	var data config.MCPConfig
+	err = json.Unmarshal([]byte(jsonStr), &data)
 	if err != nil {
 		return nil, err
 	}
-	return &config, nil
+	return &data, nil
 }
 
 // List implements Store.List
-func (s *APIStore) List(_ context.Context) ([]*config.MCPConfig, error) {
+func (s *APIStore) List(_ context.Context, _ ...bool) ([]*config.MCPConfig, error) {
 	jsonStr, err := s.request()
 	if err != nil {
 		return nil, err
@@ -75,15 +79,45 @@ func (s *APIStore) List(_ context.Context) ([]*config.MCPConfig, error) {
 }
 
 // Update implements Store.Update
-func (s *APIStore) Update(_ context.Context, server *config.MCPConfig) error {
+func (s *APIStore) Update(_ context.Context, _ *config.MCPConfig) error {
 	// only use for read config
 	return nil
 }
 
 // Delete implements Store.Delete
-func (s *APIStore) Delete(_ context.Context, name string) error {
+func (s *APIStore) Delete(_ context.Context, tenant, name string) error {
 	// only use for read config
 	return nil
+}
+
+// GetVersion implements Store.GetVersion
+func (s *APIStore) GetVersion(_ context.Context, tenant, name string, version int) (*config.MCPConfigVersion, error) {
+	return nil, nil
+}
+
+// ListVersions implements Store.ListVersions
+func (s *APIStore) ListVersions(_ context.Context, tenant, name string) ([]*config.MCPConfigVersion, error) {
+	// API store is read-only and doesn't support versioning
+	return nil, nil
+}
+
+// SetActiveVersion implements Store.SetActiveVersion
+func (s *APIStore) SetActiveVersion(_ context.Context, tenant, name string, version int) error {
+	// API store is read-only
+	return nil
+}
+
+// DeleteVersion implements Store.DeleteVersion
+func (s *APIStore) DeleteVersion(_ context.Context, tenant, name string, version int) error {
+	// API store is read-only
+	return nil
+}
+
+// ListUpdated implements Store.ListUpdated
+func (s *APIStore) ListUpdated(_ context.Context, since time.Time) ([]*config.MCPConfig, error) {
+	// API store is read-only and doesn't support versioning
+	// Just return all configs as they are always up to date
+	return s.List(context.Background())
 }
 
 func (s *APIStore) request() (string, error) {

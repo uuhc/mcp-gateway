@@ -10,7 +10,7 @@ import (
 // Priority:
 // 1. If filename is an absolute path, return it directly.
 // 2. Check ./{filename} and ./configs/{filename}
-// 3. Otherwise, fallback to /var/run/mcp-gateway/{filename}
+// 3. Otherwise, fallback to /var/run/mcp-gateway.pid
 func GetPIDPath(filename string) string {
 	if filepath.IsAbs(filename) {
 		return filename

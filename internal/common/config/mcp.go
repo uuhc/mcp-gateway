@@ -5,50 +5,57 @@ import (
 
 	"github.com/ifuryst/lol"
 
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/cnst"
-	"github.com/mcp-ecosystem/mcp-gateway/pkg/mcp"
+	"github.com/amoylab/unla/internal/common/cnst"
+	"github.com/amoylab/unla/pkg/mcp"
 )
 
 type (
 	// MCPServer represents the MCP server data structure
 	MCPServer struct {
-		Name      string    `json:"name" yaml:"name" gorm:"primaryKey"`
-		Content   MCPConfig `json:"content" yaml:"content" gorm:"type:json"`
+		Name      string    `json:"name" yaml:"name"`
+		Content   MCPConfig `json:"content" yaml:"content"`
 		CreatedAt time.Time `json:"createdAt" yaml:"createdAt"`
 		UpdatedAt time.Time `json:"updatedAt" yaml:"updatedAt"`
 	}
 
 	MCPConfig struct {
-		Name       string            `json:"name" yaml:"name" gorm:"primaryKey"`
-		Tenant     string            `json:"tenant"  yaml:"tenant" gorm:"index"`
+		Name       string            `json:"name" yaml:"name"`
+		Tenant     string            `json:"tenant" yaml:"tenant"`
 		CreatedAt  time.Time         `json:"createdAt" yaml:"createdAt"`
 		UpdatedAt  time.Time         `json:"updatedAt" yaml:"updatedAt"`
-		DeletedAt  time.Time         `json:"deletedAt" yaml:"deletedAt"` // non-zero indicates that all information has been deleted
-		Routers    []RouterConfig    `json:"routers" yaml:"routers" gorm:"type:json"`
-		Servers    []ServerConfig    `json:"servers" yaml:"servers" gorm:"type:json"`
-		Tools      []ToolConfig      `json:"tools" yaml:"tools" gorm:"type:json"`
-		McpServers []MCPServerConfig `json:"mcpServers" yaml:"mcpServers" gorm:"type:json"` // proxy mcp servers
+		DeletedAt  time.Time         `json:"deletedAt,omitempty" yaml:"deletedAt,omitempty"` // non-zero indicates that all information has been deleted
+		Routers    []RouterConfig    `json:"routers,omitempty" yaml:"routers,omitempty"`
+		Servers    []ServerConfig    `json:"servers,omitempty" yaml:"servers,omitempty"`
+		Tools      []ToolConfig      `json:"tools,omitempty" yaml:"tools,omitempty"`
+		McpServers []MCPServerConfig `json:"mcpServers,omitempty" yaml:"mcpServers,omitempty"` // proxy mcp servers
 	}
 
 	RouterConfig struct {
-		Server string      `json:"server" yaml:"server"`
-		Prefix string      `json:"prefix" yaml:"prefix"`
-		CORS   *CORSConfig `json:"cors,omitempty" yaml:"cors,omitempty"`
+		Server    string      `json:"server" yaml:"server"`
+		Prefix    string      `json:"prefix" yaml:"prefix"`
+		SSEPrefix string      `json:"ssePrefix" yaml:"ssePrefix"`
+		CORS      *CORSConfig `json:"cors,omitempty" yaml:"cors,omitempty"`
+		Auth      *Auth       `json:"auth,omitempty" yaml:"auth,omitempty"`
 	}
 
 	CORSConfig struct {
-		AllowOrigins     []string `json:"allowOrigins" yaml:"allowOrigins"`
-		AllowMethods     []string `json:"allowMethods" yaml:"allowMethods"`
-		AllowHeaders     []string `json:"allowHeaders" yaml:"allowHeaders"`
-		ExposeHeaders    []string `json:"exposeHeaders" yaml:"exposeHeaders"`
+		AllowOrigins     []string `json:"allowOrigins,omitempty" yaml:"allowOrigins,omitempty"`
+		AllowMethods     []string `json:"allowMethods,omitempty" yaml:"allowMethods,omitempty"`
+		AllowHeaders     []string `json:"allowHeaders,omitempty" yaml:"allowHeaders,omitempty"`
+		ExposeHeaders    []string `json:"exposeHeaders,omitempty" yaml:"exposeHeaders,omitempty"`
 		AllowCredentials bool     `json:"allowCredentials" yaml:"allowCredentials"`
+	}
+
+	ProxyConfig struct {
+		Host string `json:"host" yaml:"host"`
+		Port int    `json:"port" yaml:"port"`
+		Type string `json:"type" yaml:"type"` // http, https, socks5
 	}
 
 	ServerConfig struct {
 		Name         string            `json:"name" yaml:"name"`
-		Namespace    string            `json:"namespace" yaml:"namespace"`
 		Description  string            `json:"description" yaml:"description"`
-		AllowedTools []string          `json:"allowedTools" yaml:"allowedTools"`
+		AllowedTools []string          `json:"allowedTools,omitempty" yaml:"allowedTools,omitempty"`
 		Config       map[string]string `json:"config,omitempty" yaml:"config,omitempty"`
 	}
 
@@ -57,21 +64,23 @@ type (
 		Description  string            `json:"description,omitempty" yaml:"description,omitempty"`
 		Method       string            `json:"method" yaml:"method"`
 		Endpoint     string            `json:"endpoint" yaml:"endpoint"`
-		Headers      map[string]string `json:"headers" yaml:"headers"`
-		Args         []ArgConfig       `json:"args" yaml:"args"`
+		Proxy        *ProxyConfig      `json:"proxy,omitempty" yaml:"proxy,omitempty"`
+		Headers      map[string]string `json:"headers,omitempty" yaml:"headers,omitempty"`
+		Args         []ArgConfig       `json:"args,omitempty" yaml:"args,omitempty"`
 		RequestBody  string            `json:"requestBody"  yaml:"requestBody"`
 		ResponseBody string            `json:"responseBody" yaml:"responseBody"`
 		InputSchema  map[string]any    `json:"inputSchema,omitempty" yaml:"inputSchema,omitempty"`
 	}
 
 	MCPServerConfig struct {
-		Type    string                `json:"type" yaml:"type"`                           // sse, stdio and streamable-http
-		Name    string                `json:"name" yaml:"name"`                           // server name
-		Command string                `json:"command,omitempty" yaml:"command,omitempty"` // for stdio
-		Args    []string              `json:"args,omitempty" yaml:"args,omitempty"`       // for stdio
-		Env     map[string]string     `json:"env,omitempty" yaml:"env,omitempty"`         // for stdio
-		URL     string                `json:"url,omitempty" yaml:"url,omitempty"`         // for sse and streamable-http
-		Policy  cnst.MCPStartupPolicy `json:"policy" yaml:"policy"`                       // onStart or onDemand
+		Type         string                `json:"type" yaml:"type"`                           // sse, stdio and streamable-http
+		Name         string                `json:"name" yaml:"name"`                           // server name
+		Command      string                `json:"command,omitempty" yaml:"command,omitempty"` // for stdio
+		Args         []string              `json:"args,omitempty" yaml:"args,omitempty"`       // for stdio
+		Env          map[string]string     `json:"env,omitempty" yaml:"env,omitempty"`         // for stdio
+		URL          string                `json:"url,omitempty" yaml:"url,omitempty"`         // for sse and streamable-http
+		Policy       cnst.MCPStartupPolicy `json:"policy" yaml:"policy"`                       // onStart or onDemand
+		Preinstalled bool                  `json:"preinstalled" yaml:"preinstalled"`           // whether to install this MCP server when mcp-gateway starts
 	}
 
 	ArgConfig struct {
@@ -85,8 +94,30 @@ type (
 	}
 
 	ItemsConfig struct {
-		Type string   `json:"type" yaml:"type"`
-		Enum []string `json:"enum,omitempty" yaml:"enum,omitempty"`
+		Type       string         `json:"type" yaml:"type"`
+		Enum       []string       `json:"enum,omitempty" yaml:"enum,omitempty"`
+		Properties map[string]any `json:"properties,omitempty" yaml:"properties,omitempty"`
+	}
+
+	// MCPConfigVersion represents a version of an MCP configuration
+	MCPConfigVersion struct {
+		Version    int             `json:"version" yaml:"version"`
+		CreatedBy  string          `json:"created_by" yaml:"created_by"`
+		CreatedAt  time.Time       `json:"created_at" yaml:"created_at"`
+		ActionType cnst.ActionType `json:"action_type" yaml:"action_type"` // Create, Update, Delete, Revert
+		Name       string          `json:"name" yaml:"name"`
+		Tenant     string          `json:"tenant" yaml:"tenant"`
+		Routers    string          `json:"routers" yaml:"routers"`
+		Servers    string          `json:"servers" yaml:"servers"`
+		Tools      string          `json:"tools" yaml:"tools"`
+		McpServers string          `json:"mcp_servers" yaml:"mcp_servers"`
+		IsActive   bool            `json:"is_active" yaml:"is_active"` // indicates if this version is currently active
+		Hash       string          `json:"hash" yaml:"hash"`           // hash of the configuration content
+	}
+
+	// Auth represents authentication configuration
+	Auth struct {
+		Mode cnst.AuthMode `json:"mode" yaml:"mode"`
 	}
 )
 
@@ -107,6 +138,10 @@ func (t *ToolConfig) ToToolSchema() mcp.ToolSchema {
 				items["enum"] = lol.Union(arg.Items.Enum)
 			} else {
 				items["type"] = arg.Items.Type
+				// If items is an object type, recursively process its properties
+				if arg.Items.Type == "object" && arg.Items.Properties != nil {
+					items["properties"] = arg.Items.Properties
+				}
 			}
 			property["items"] = items
 		}

@@ -1,0 +1,46 @@
+name: Publish Helm Chart to Chart Repo
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source repo
+        uses: actions/checkout@v3
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+
+      - name: Package Helm chart
+        run: |
+          mkdir -p packaged
+          helm package ./deploy/helm -d packaged
+
+      - name: Checkout chart repo (unla-helm-charts)
+        uses: actions/checkout@v3
+        with:
+          repository: amoylab/unla-helm-charts
+          ref: main
+          token: ${{ secrets.CHART_REPO_TOKEN }}
+          path: chart-repo
+
+      - name: Update index.yaml (in root directory)
+        run: |
+          cd chart-repo
+          cp ../packaged/*.tgz ./
+          helm repo index . --url https://amoylba.github.io/unla-helm-charts --merge index.yaml || true
+
+      - name: Commit and push
+        run: |
+          cd chart-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Update chart for ${{ github.ref_name }}" || echo "No changes"
+          git push origin main

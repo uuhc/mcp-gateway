@@ -3,26 +3,61 @@ package handler
 import (
 	"time"
 
-	"github.com/mcp-ecosystem/mcp-gateway/internal/i18n"
+	"github.com/amoylab/unla/internal/i18n"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/apiserver/database"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/dto"
+	"github.com/amoylab/unla/internal/apiserver/database"
+	"github.com/amoylab/unla/internal/auth/jwt"
+	"github.com/amoylab/unla/internal/common/dto"
 	"go.uber.org/zap"
 )
 
 // ListTenants handles listing all tenants
 func (h *Handler) ListTenants(c *gin.Context) {
-	h.logger.Info("listing all tenants",
+	h.logger.Info("listing tenants",
 		zap.String("remote_addr", c.ClientIP()))
 
-	tenants, err := h.db.ListTenants(c.Request.Context())
-	if err != nil {
-		h.logger.Error("failed to list tenants",
-			zap.Error(err),
-			zap.String("remote_addr", c.ClientIP()))
-		i18n.From(i18n.ErrInternalServer).Send(c)
+	// Get user from claims
+	claims, exists := c.Get("claims")
+	if !exists {
+		h.logger.Warn("missing JWT claims in context")
+		i18n.RespondWithError(c, i18n.ErrUnauthorized)
 		return
+	}
+	jwtClaims := claims.(*jwt.Claims)
+
+	// Get user information
+	user, err := h.db.GetUserByUsername(c.Request.Context(), jwtClaims.Username)
+	if err != nil {
+		h.logger.Error("failed to get user info",
+			zap.String("username", jwtClaims.Username),
+			zap.Error(err))
+		i18n.RespondWithError(c, i18n.ErrInternalServer.WithParam("Reason", "Failed to get user info: "+err.Error()))
+		return
+	}
+
+	var tenants []*database.Tenant
+	if user.Role == database.RoleAdmin {
+		// Admin can see all tenants
+		tenants, err = h.db.ListTenants(c.Request.Context())
+		if err != nil {
+			h.logger.Error("failed to list tenants",
+				zap.Error(err),
+				zap.String("remote_addr", c.ClientIP()))
+			i18n.From(i18n.ErrInternalServer).Send(c)
+			return
+		}
+	} else {
+		// Regular users can only see their assigned tenants
+		tenants, err = h.db.GetUserTenants(c.Request.Context(), user.ID)
+		if err != nil {
+			h.logger.Error("failed to get user tenants",
+				zap.Error(err),
+				zap.String("username", user.Username),
+				zap.String("remote_addr", c.ClientIP()))
+			i18n.RespondWithError(c, i18n.ErrInternalServer)
+			return
+		}
 	}
 
 	h.logger.Debug("successfully retrieved tenants list",
@@ -256,6 +291,26 @@ func (h *Handler) GetTenantInfo(c *gin.Context) {
 		zap.String("tenant_name", name),
 		zap.String("remote_addr", c.ClientIP()))
 
+	// Get user from claims
+	claims, exists := c.Get("claims")
+	if !exists {
+		h.logger.Warn("missing JWT claims in context")
+		i18n.RespondWithError(c, i18n.ErrUnauthorized)
+		return
+	}
+	jwtClaims := claims.(*jwt.Claims)
+
+	// Get user information
+	user, err := h.db.GetUserByUsername(c.Request.Context(), jwtClaims.Username)
+	if err != nil {
+		h.logger.Error("failed to get user info",
+			zap.String("username", jwtClaims.Username),
+			zap.Error(err))
+		i18n.RespondWithError(c, i18n.ErrInternalServer.WithParam("Reason", "Failed to get user info: "+err.Error()))
+		return
+	}
+
+	// Get tenant information
 	tenant, err := h.db.GetTenantByName(c.Request.Context(), name)
 	if err != nil {
 		h.logger.Warn("tenant not found",
@@ -264,6 +319,37 @@ func (h *Handler) GetTenantInfo(c *gin.Context) {
 			zap.String("remote_addr", c.ClientIP()))
 		i18n.NotFoundFromErr(i18n.ErrorTenantNotFound.WithParam("Name", name)).Send(c)
 		return
+	}
+
+	// Check permission
+	if user.Role != database.RoleAdmin {
+		// For regular users, check if they belong to this tenant
+		userTenants, err := h.db.GetUserTenants(c.Request.Context(), user.ID)
+		if err != nil {
+			h.logger.Error("failed to get user tenants",
+				zap.Error(err),
+				zap.String("username", user.Username),
+				zap.String("remote_addr", c.ClientIP()))
+			i18n.RespondWithError(c, i18n.ErrInternalServer)
+			return
+		}
+
+		hasAccess := false
+		for _, t := range userTenants {
+			if t.Name == tenant.Name {
+				hasAccess = true
+				break
+			}
+		}
+
+		if !hasAccess {
+			h.logger.Warn("user does not have access to tenant",
+				zap.String("username", user.Username),
+				zap.String("tenant_name", tenant.Name),
+				zap.String("remote_addr", c.ClientIP()))
+			i18n.RespondWithError(c, i18n.ErrorTenantPermissionError)
+			return
+		}
 	}
 
 	h.logger.Debug("successfully retrieved tenant information",

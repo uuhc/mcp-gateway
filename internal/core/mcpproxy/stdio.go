@@ -5,16 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/mcp-ecosystem/mcp-gateway/internal/template"
+	"github.com/amoylab/unla/internal/template"
 
 	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/client/transport"
 	mcpgo "github.com/mark3labs/mcp-go/mcp"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/cnst"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/config"
-	"github.com/mcp-ecosystem/mcp-gateway/pkg/mcp"
-	"github.com/mcp-ecosystem/mcp-gateway/pkg/utils"
-	"github.com/mcp-ecosystem/mcp-gateway/pkg/version"
+	"github.com/amoylab/unla/internal/common/cnst"
+	"github.com/amoylab/unla/internal/common/config"
+	"github.com/amoylab/unla/pkg/mcp"
+	"github.com/amoylab/unla/pkg/utils"
+	"github.com/amoylab/unla/pkg/version"
 )
 
 // StdioTransport implements Transport using standard input/output
@@ -45,7 +45,6 @@ func (t *StdioTransport) Start(ctx context.Context, tmplCtx *template.Context) e
 		utils.MapToEnvList(renderedClientEnv),
 		t.cfg.Args...,
 	)
-	fmt.Println("debug:", utils.MapToEnvList(renderedClientEnv), t.cfg.Command, t.cfg.Args)
 
 	// Start the transport
 	if err := stdioTransport.Start(ctx); err != nil {
@@ -79,7 +78,11 @@ func (t *StdioTransport) Stop(_ context.Context) error {
 	}
 
 	if t.client != nil {
-		return t.client.Close()
+		err := t.client.Close()
+		if err != nil {
+			return err
+		}
+		t.client = nil
 	}
 
 	return nil

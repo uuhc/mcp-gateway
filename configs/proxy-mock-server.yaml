@@ -22,7 +22,6 @@ routers:
 
 servers:
   - name: "mock-server"
-    namespace: "user-service"
     description: "Mock User Service"
     allowedTools:
       - "register_user"
@@ -135,13 +134,35 @@ tools:
         type: "object"
         description: "User custom settings as key-value pairs"
         default: "{}"
+      - name: "notifications"
+        position: "body"
+        required: false
+        type: "array"
+        description: "User notification preferences"
+        items:
+          type: "object"
+          properties:
+            type:
+              type: "string"
+              description: "Notification type (email, push, sms)"
+            channel:
+              type: "string"
+              description: "Notification channel (marketing, system, security)"
+            enabled:
+              type: "boolean"
+              description: "Whether this notification is enabled"
+            frequency:
+              type: "number"
+              description: "Notification frequency (0: realtime, 1: daily, 2: weekly, 3: monthly)"
+        default: "[]"
     requestBody: |-
       {
         "isPublic": {{.Args.isPublic}},
         "showEmail": {{.Args.showEmail}},
         "theme": "{{.Args.theme}}",
         "tags": {{.Args.tags}},
-        "settings": {{ toJSON .Args.settings }}
+        "settings": {{ toJSON .Args.settings }},
+        "notifications": {{ .Args.notifications }}
       }
     responseBody: |-
       {
@@ -154,7 +175,8 @@ tools:
           "showEmail": {{.Response.Data.preferences.showEmail}},
           "theme": "{{.Response.Data.preferences.theme}}",
           "tags": {{.Response.Data.preferences.tags}},
-          "settings": {{ toJSON .Response.Data.preferences.settings }}
+          "settings": {{ toJSON .Response.Data.preferences.settings }},
+          "notifications": {{ toJSON .Response.Data.preferences.notifications }}
         }
       }
 

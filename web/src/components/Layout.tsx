@@ -1,28 +1,31 @@
 import {
+  Avatar,
+  Button,
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
+  Link as HeroLink,
   Navbar,
   NavbarContent,
   NavbarItem,
-  Button,
-  Link as HeroLink,
-  Avatar,
-  Tooltip,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem
+  Tooltip
 } from "@heroui/react";
-import { Icon } from '@iconify/react';
-import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation, Link, useNavigate } from 'react-router-dom';
+import {Icon} from '@iconify/react';
+import React, {useEffect, useState} from 'react';
+import {useTranslation} from 'react-i18next';
+import {Link, useLocation, useNavigate} from 'react-router-dom';
 
-import { getCurrentUser } from '../api/auth';
-import { toast } from '../utils/toast';
+import {getCurrentUser} from '../services/api';
+import {toast} from '../utils/toast';
 
 
-import { ChangePasswordDialog } from './ChangePasswordDialog';
-import { LanguageSwitcher } from './LanguageSwitcher';
-import { WechatQRCode } from './WechatQRCode';
+import {ChangePasswordDialog} from './ChangePasswordDialog';
+import {LanguageSwitcher} from './LanguageSwitcher';
+import {WechatQRCode} from './WechatQRCode';
+
+// 导入logo图片
+import logoImg from '/logo.png';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -56,7 +59,7 @@ export function Layout({ children }: LayoutProps) {
         const response = await getCurrentUser();
         setUserInfo(response.data);
       } catch (error) {
-        toast.error(t('errors.fetch_user_info', { error: (error as Error).message }), {
+        toast.error(t('errors.fetch_user', { error: (error as Error).message }), {
           duration: 3000,
         });
       }
@@ -77,6 +80,12 @@ export function Layout({ children }: LayoutProps) {
       label: t('nav.gateway'),
       icon: 'lucide:server',
       path: '/gateway',
+    },
+    {
+      key: 'config-versions',
+      label: t('nav.config_versions'),
+      icon: 'lucide:history',
+      path: '/config-versions',
     },
     ...(userInfo?.role === 'admin' ? [
       {
@@ -113,7 +122,7 @@ export function Layout({ children }: LayoutProps) {
         maxWidth="full"
         height="4rem"
       >
-        <NavbarContent className={`transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
+        <NavbarContent className={`transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-56'}`}>
           <NavbarItem>
             <Button
               isIconOnly
@@ -157,7 +166,7 @@ export function Layout({ children }: LayoutProps) {
             <Tooltip content={t('common.view_github')}>
               <Button
                 as={HeroLink}
-                href="https://github.com/mcp-ecosystem/mcp-gateway"
+                href="https://github.com/amoylab/unla"
                 target="_blank"
                 variant="light"
                 isIconOnly
@@ -200,16 +209,16 @@ export function Layout({ children }: LayoutProps) {
         {/* Sidebar */}
         <div
           className={`h-screen bg-card text-foreground flex flex-col fixed left-0 top-0 z-40 transition-all duration-300 border-r border-border shadow-lg ${
-            isCollapsed ? "w-20" : "w-64"
+            isCollapsed ? "w-20" : "w-56"
           }`}
         >
           <div className="flex items-center justify-center p-4 border-b border-border h-16">
             {isCollapsed ? (
-              <img src="/logo.png" alt="MCP Logo" className="w-8 h-8" />
+              <img src={logoImg} alt="MCP Logo" className="w-8 h-8" />
             ) : (
               <div className="flex items-center gap-2">
-                <img src="/logo.png" alt="MCP Logo" className="w-6 h-6" />
-                <span className="text-xl font-bold">MCP Admin</span>
+                <img src={logoImg} alt="MCP Logo" className="w-6 h-6" />
+                <span className="text-xl font-bold">Unla</span>
               </div>
             )}
           </div>
@@ -309,7 +318,7 @@ export function Layout({ children }: LayoutProps) {
         </div>
 
         {/* Main Content */}
-        <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
+        <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-56'}`}>
           <div className="p-6">
             {children}
           </div>

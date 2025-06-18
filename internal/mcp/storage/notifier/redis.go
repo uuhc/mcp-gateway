@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/cnst"
+	"github.com/amoylab/unla/internal/common/cnst"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/config"
+	"github.com/amoylab/unla/internal/common/config"
 )
 
 // RedisNotifier implements Notifier using Redis pub/sub

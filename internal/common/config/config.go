@@ -1,17 +1,13 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"regexp"
 	"time"
 
-	"github.com/mcp-ecosystem/mcp-gateway/pkg/helper"
+	"github.com/amoylab/unla/pkg/helper"
 
 	"github.com/joho/godotenv"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"gopkg.in/yaml.v3"
 )
 
@@ -34,6 +30,7 @@ type (
 		Storage        StorageConfig    `yaml:"storage"`
 		Notifier       NotifierConfig   `yaml:"notifier"`
 		Session        SessionConfig    `yaml:"session"`
+		Auth           AuthConfig       `yaml:"auth"`
 	}
 
 	// SessionConfig represents the session storage configuration
@@ -44,12 +41,13 @@ type (
 
 	// SessionRedisConfig represents the Redis configuration for session storage
 	SessionRedisConfig struct {
-		Addr     string `yaml:"addr"`
-		Username string `yaml:"username"`
-		Password string `yaml:"password"`
-		DB       int    `yaml:"db"`
-		Topic    string `yaml:"topic"`
-		Prefix   string `yaml:"prefix"`
+		Addr     string        `yaml:"addr"`
+		Username string        `yaml:"username"`
+		Password string        `yaml:"password"`
+		DB       int           `yaml:"db"`
+		Topic    string        `yaml:"topic"`
+		Prefix   string        `yaml:"prefix"`
+		TTL      time.Duration `yaml:"ttl"` // TTL for session data in Redis
 	}
 
 	// LoggerConfig represents the logger configuration
@@ -66,6 +64,25 @@ type (
 		Stacktrace bool   `yaml:"stacktrace"`  // whether to include stacktrace in error logs
 		TimeZone   string `yaml:"time_zone"`   // time zone for log timestamps, e.g., "UTC", default is local
 		TimeFormat string `yaml:"time_format"` // time format for log timestamps, default is "2006-01-02 15:04:05"
+	}
+
+	// AuthConfig defines the authentication configuration
+	AuthConfig struct {
+		OAuth2 *OAuth2Config `yaml:"oauth2"`
+		CORS   *CORSConfig   `yaml:"cors,omitempty"`
+	}
+	OAuth2Config struct {
+		Issuer  string              `yaml:"issuer"`
+		Storage OAuth2StorageConfig `yaml:"storage"`
+	}
+	OAuth2StorageConfig struct {
+		Type  string            `yaml:"type"`
+		Redis OAuth2RedisConfig `yaml:"redis"`
+	}
+	OAuth2RedisConfig struct {
+		Addr     string `yaml:"addr"`
+		Password string `yaml:"password"`
+		DB       int    `yaml:"db"`
 	}
 )
 
@@ -86,14 +103,13 @@ func LoadConfig[T Type](filename string) (*T, string, error) {
 
 	// Resolve environment variables
 	data = resolveEnv(data)
-
 	var cfg T
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, cfgPath, err
 	}
 
 	// Validate durations after unmarshalling
-	if mcpCfg, ok := any(cfg).(*MCPGatewayConfig); ok {
+	if mcpCfg, ok := any(&cfg).(*MCPGatewayConfig); ok {
 		if mcpCfg.ReloadInterval <= time.Second {
 			mcpCfg.ReloadInterval = 600 * time.Second
 		}
@@ -120,89 +136,4 @@ func resolveEnv(content []byte) []byte {
 		}
 		return []byte(defaultValue)
 	})
-}
-
-// LoadAPIServerConfig loads the API server configuration from a file
-func LoadAPIServerConfig(path string) (*APIServerConfig, error) {
-	v := viper.New()
-	v.SetConfigFile(path)
-	v.AutomaticEnv()
-
-	if err := v.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("failed to read config file: %w", err)
-	}
-
-	var cfg APIServerConfig
-	if err := v.Unmarshal(&cfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
-	}
-
-	return &cfg, nil
-}
-
-// NewLogger creates a new logger based on configuration
-func NewLogger(cfg *LoggerConfig) (*zap.Logger, error) {
-	var config zap.Config
-
-	// Set log level
-	level := zapcore.InfoLevel
-	if err := level.UnmarshalText([]byte(cfg.Level)); err != nil {
-		return nil, fmt.Errorf("invalid log level: %w", err)
-	}
-
-	// Configure encoder
-	encoderConfig := zapcore.EncoderConfig{
-		TimeKey:        "time",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "caller",
-		MessageKey:     "msg",
-		StacktraceKey:  "stacktrace",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.LowercaseLevelEncoder,
-		EncodeTime:     zapcore.ISO8601TimeEncoder,
-		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder,
-	}
-
-	// Create logger configuration
-	if cfg.Format == "json" {
-		config = zap.Config{
-			Level:             zap.NewAtomicLevelAt(level),
-			Development:       false,
-			DisableCaller:     false,
-			DisableStacktrace: !cfg.Stacktrace,
-			Sampling: &zap.SamplingConfig{
-				Initial:    100,
-				Thereafter: 100,
-			},
-			Encoding:         "json",
-			EncoderConfig:    encoderConfig,
-			OutputPaths:      []string{cfg.Output},
-			ErrorOutputPaths: []string{cfg.Output},
-		}
-	} else {
-		config = zap.Config{
-			Level:             zap.NewAtomicLevelAt(level),
-			Development:       false,
-			DisableCaller:     false,
-			DisableStacktrace: !cfg.Stacktrace,
-			Sampling: &zap.SamplingConfig{
-				Initial:    100,
-				Thereafter: 100,
-			},
-			Encoding:         "console",
-			EncoderConfig:    encoderConfig,
-			OutputPaths:      []string{cfg.Output},
-			ErrorOutputPaths: []string{cfg.Output},
-		}
-	}
-
-	// Create logger
-	logger, err := config.Build()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create logger: %w", err)
-	}
-
-	return logger, nil
 }

@@ -1,0 +1,5 @@
+{
+  "snapshot": "snapshot-20250526-4677a5f5-e9d5-455e-924e-a7df1af56316",
+  "install": "go mod download && cd web && npm i",
+  "terminals": []
+}

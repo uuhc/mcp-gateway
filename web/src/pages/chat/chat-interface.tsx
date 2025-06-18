@@ -1,52 +1,22 @@
-import { Card, CardBody, Button, Input, Select, SelectItem, Divider, Tabs, Tab } from '@heroui/react';
-import { Icon } from '@iconify/react';
+import {Button, Card, CardBody, Divider, Input, Select, SelectItem, Tab, Tabs} from '@heroui/react';
+import {Icon} from '@iconify/react';
 import yaml from 'js-yaml';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
+import {useTranslation} from 'react-i18next';
+import {useNavigate, useParams} from 'react-router-dom';
+import {v4 as uuidv4} from 'uuid';
 
-import { getChatMessages, getMCPServers } from '../../services/api';
-import { mcpService } from '../../services/mcp';
-import { wsService, WebSocketMessage } from '../../services/websocket';
-import { Tool } from '../../types/mcp';
-import {Message as MessageType, ToolCall, ToolResult} from '../../types/message';
-import { toast } from '../../utils/toast';
+import {getChatMessages, getMCPServers} from '../../services/api';
+import {mcpService} from '../../services/mcp';
+import {WebSocketMessage, wsService} from '../../services/websocket';
+import type { Gateway } from '../../types/gateway';
+import {Tool} from '../../types/mcp';
+import {Message as MessageType, ToolCall, ToolResult, BackendMessage} from '../../types/message';
+import {toast} from '../../utils/toast';
 
-import { ChatProvider } from './chat-context';
-import { ChatHistory } from './components/chat-history';
-import { ChatMessage } from './components/chat-message';
-
-interface BackendMessage {
-  id: string;
-  content: string;
-  sender: string;
-  timestamp: string;
-  toolCalls?: string;
-  toolResult?: string;
-}
-
-interface Gateway {
-  name: string;
-  config: string;
-  parsedConfig?: {
-    routers: Array<{
-      server: string;
-      prefix: string;
-    }>;
-    servers: Array<{
-      name: string;
-      namespace: string;
-      description: string;
-      allowedTools: string[];
-    }>;
-    tools: Array<{
-      name: string;
-      description: string;
-      method: string;
-    }>;
-  };
-}
+import {ChatProvider} from './chat-context';
+import {ChatHistory} from './components/chat-history';
+import {ChatMessage} from './components/chat-message';
 
 export function ChatInterface() {
   const { t } = useTranslation();
@@ -71,7 +41,7 @@ export function ChatInterface() {
   // Parse configuration
   const parseConfig = React.useCallback((config: string) => {
     try {
-      return yaml.load(config) as Gateway['parsedConfig'];
+      return yaml.load(config) as Gateway;
     } catch (error) {
       toast.error(t('errors.parse_config', { error: error instanceof Error ? error.message : 'Unknown error' }));
       return undefined;
@@ -103,9 +73,9 @@ export function ChatInterface() {
     const loadToolsForActiveServers = async () => {
       for (const serverName of activeServices) {
         const server = mcpServers.find((s: Gateway) => s.name === serverName);
-        if (!server?.parsedConfig) continue;
+        if (!server) continue;
 
-        for (const router of server.parsedConfig.routers) {
+        for (const router of server.routers || []) {
           try {
             // First establish connection
             await mcpService.connect({

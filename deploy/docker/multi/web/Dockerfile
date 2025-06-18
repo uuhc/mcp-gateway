@@ -38,6 +38,8 @@ RUN npm run build
 
 FROM nginx:1.27.5-bookworm
 
+WORKDIR /app
+
 # Set default timezone
 ENV TZ=UTC
 
@@ -51,17 +53,13 @@ RUN apt-get update && apt-get install -y \
 # Copy apiserver binary and config
 COPY --from=apiserver-builder /app/apiserver /app/
 COPY --from=apiserver-builder /app/configs /app/configs
-COPY --from=apiserver-builder /app/configs/apiserver.yaml /etc/mcp-gateway/
+COPY --from=apiserver-builder /app/configs/apiserver.yaml /etc/unla/
 
 # Create data directory for apiserver with proper permissions
 RUN mkdir -p /app/data && \
     chmod -R 777 /app/data && \
     mkdir -p /tmp/mcp-gateway && \
     chmod -R 777 /tmp/mcp-gateway
-
-# Set minimum required environment variables
-ENV APISERVER_I18N_PATH=/app/configs/i18n \
-    GATEWAY_DB_NAME=/app/data/mcp-gateway.db
 
 # Copy web files to nginx html directory
 COPY --from=web-builder /app/web/dist /usr/share/nginx/html

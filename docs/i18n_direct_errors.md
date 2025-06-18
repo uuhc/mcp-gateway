@@ -30,7 +30,7 @@ func main() {
 
 ```go
 import (
-    "github.com/mcp-ecosystem/mcp-gateway/pkg/i18n"
+    "github.com/amoylab/unla/pkg/i18n"
 )
 ```
 

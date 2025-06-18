@@ -9,9 +9,9 @@ body:
       label: "⚠️ 验证"
       description: "请确认您已经完成以下操作："
       options:
-        - label: 我已经搜索过 [issues](https://github.com/mcp-ecosystem/mcp-gateway/issues)，确信这不是一个重复的请求。
+        - label: 我已经搜索过 [issues](https://github.com/amoylab/unla/issues)，确信这不是一个重复的请求。
           required: true
-        - label: 我已经查看了 [发布说明](https://github.com/mcp-ecosystem/mcp-gateway/releases)，确信这项功能尚未被实现。
+        - label: 我已经查看了 [发布说明](https://github.com/amoylab/unla/releases)，确信这项功能尚未被实现。
           required: true
 
   - type: textarea

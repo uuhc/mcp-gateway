@@ -1,13 +1,15 @@
-# MCP Gateway
+# Unla - MCP Gateway
 
 > 🚀 Instantly transform your existing MCP Servers and APIs into [MCP](https://modelcontextprotocol.io/) endpoints — without changing a line of code.
 
 [![English](https://img.shields.io/badge/English-Click-yellow)](./README.md)
 [![简体中文](https://img.shields.io/badge/简体中文-点击查看-orange)](docs/README.zh-CN.md)
-[![Release](https://img.shields.io/github/v/release/mcp-ecosystem/mcp-gateway)](https://github.com/mcp-ecosystem/mcp-gateway/releases)
+[![Release](https://img.shields.io/github/v/release/mcp-ecosystem/mcp-gateway)](https://github.com/amoylab/unla/releases)
 [![Docs](https://img.shields.io/badge/Docs-View%20Online-blue)](https://mcp.ifuryst.com)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/mcp-ecosystem/mcp-gateway)
 [![Discord](https://img.shields.io/badge/Discord-Join%20our%20Discord-5865F2?logo=discord&logoColor=white)](https://discord.gg/udf69cT9TY)
+[![Go Report Card](https://goreportcard.com/badge/github.com/amoylab/unla)](https://goreportcard.com/report/github.com/amoylab/unla)
+[![Snyk Security](https://img.shields.io/badge/Snyk-Secure-blueviolet?logo=snyk)](https://snyk.io/test/github/mcp-ecosystem/mcp-gateway)
 
 ---
 
@@ -21,13 +23,13 @@ Every upvote helps more developers discover it! ❤️
 
 ---
 
-> ⚡ **Note**: MCP Gateway is under rapid development! We strive to maintain backward compatibility, but it cannot be 100% guaranteed. Please make sure to check version changes carefully when upgrading. Due to the fast iteration, documentation updates may sometimes lag behind. If you encounter any issues, feel free to search or ask for help via [Discord](https://discord.gg/udf69cT9TY) or [Issues](https://github.com/mcp-ecosystem/mcp-gateway/issues) ❤️
+> ⚡ **Note**: Unla is under rapid development! We strive to maintain backward compatibility, but it cannot be 100% guaranteed. Please make sure to check version changes carefully when upgrading. Due to the fast iteration, documentation updates may sometimes lag behind. If you encounter any issues, feel free to search or ask for help via [Discord](https://discord.gg/udf69cT9TY) or [Issues](https://github.com/amoylab/unla/issues) ❤️
 
 ---
 
-## ✨ What is MCP Gateway?
+## ✨ What is Unla?
 
-**MCP Gateway** is a lightweight and highly available gateway service written in Go. It enables individuals and organizations to convert their existing MCP Servers and APIs into services compliant with the [MCP Protocol](https://modelcontextprotocol.io/) — all through configuration, with **zero code changes**.
+**Unla** is a lightweight and highly available gateway service written in Go. It enables individuals and organizations to convert their existing MCP Servers and APIs into services compliant with the [MCP Protocol](https://modelcontextprotocol.io/) — all through configuration, with **zero code changes**.
 
 https://github.com/user-attachments/assets/69480eda-7aa7-4be7-9bc7-cae57fe16c54
 
@@ -42,7 +44,7 @@ https://github.com/user-attachments/assets/69480eda-7aa7-4be7-9bc7-cae57fe16c54
 
 ## 🚀 Getting Started
 
-MCP Gateway supports a ready-to-run Docker deployment. Full deployment and configuration instructions are available in the [docs](https://mcp.ifuryst.com/getting-started/quick-start).
+Unla supports a ready-to-run Docker deployment. Full deployment and configuration instructions are available in the [docs](https://mcp.ifuryst.com/getting-started/quick-start).
 
 ### Quick Launch with Docker
 
@@ -60,7 +62,7 @@ Launch the container:
 
 ```bash
 docker run -d \
-  --name mcp-gateway \
+  --name unla \
   -p 8080:80 \
   -p 5234:5234 \
   -p 5235:5235 \
@@ -74,7 +76,7 @@ docker run -d \
   -e SUPER_ADMIN_USERNAME=${SUPER_ADMIN_USERNAME} \
   -e SUPER_ADMIN_PASSWORD=${SUPER_ADMIN_PASSWORD} \
   --restart unless-stopped \
-  ghcr.io/mcp-ecosystem/mcp-gateway/allinone:latest
+  ghcr.io/amoylab/unla/allinone:latest
 ```
 
 ### Access and Configuration
@@ -84,7 +86,7 @@ docker run -d \
    - Login with the administrator credentials you configured
 
 2. Add an MCP Server:
-   - Copy the config from: https://github.com/mcp-ecosystem/mcp-gateway/blob/main/configs/proxy-mock-server.yaml
+   - Copy the config from: https://github.com/amoylab/unla/blob/main/configs/proxy-mock-server.yaml
    - Click "Add MCP Server" in the web interface
    - Paste the configuration and save
 
@@ -129,10 +131,10 @@ You can test the service using:
 - [x] Automatic configuration fetching and seamless hot-reloading  
 - [x] Configuration persistence (Disk/SQLite/PostgreSQL/MySQL)  
 - [x] Configuration sync via OS Signals, HTTP, or Redis PubSub  
-- [ ] Version control for configuration  
+- [x] Version control for configuration  
 
 ### 🔐 Security & Authentication
-- [ ] OAuth-based pre-authentication support for MCP Servers  
+- [x] OAuth-based pre-authentication support for MCP Servers  
 
 ### 🖥 User Interface
 - [x] Intuitive and lightweight management UI  
@@ -140,7 +142,7 @@ You can test the service using:
 ### 📦 Deployment & Operations
 - [x] Multi-replica service support  
 - [x] Docker support  
-- [ ] Kubernetes and Helm deployment support  
+- [x] Kubernetes and Helm deployment support  
 
 ---
 
@@ -158,10 +160,10 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## 💬 Join Our WeChat Community
 
-Scan the QR code below to add us on WeChat. Please include a note: `mcp-gateway` or `mcpgw`.
+Scan the QR code below to add us on WeChat. Please include a note: `mcp-gateway`, `mcpgw` or `unla`.
 
 <img src="web/public/wechat-qrcode.png" alt="WeChat QR Code" width="350" height="350" />
 
 ## 📈 Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=mcp-ecosystem/mcp-gateway&type=Date)](https://star-history.com/#mcp-ecosystem/mcp-gateway&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=AmoyLab/Unla&type=Date)](https://star-history.com/#AmoyLab/Unla&Date)

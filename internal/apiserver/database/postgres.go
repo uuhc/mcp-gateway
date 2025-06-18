@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mcp-ecosystem/mcp-gateway/internal/common/config"
+	"github.com/amoylab/unla/internal/common/config"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -112,6 +112,13 @@ func (db *Postgres) GetSessions(ctx context.Context) ([]*Session, error) {
 		Order("created_at desc").
 		Find(&sessions).Error
 	return sessions, err
+}
+
+// DeleteSession deletes a session by ID
+func (db *Postgres) DeleteSession(ctx context.Context, sessionID string) error {
+	return db.db.WithContext(ctx).
+		Where("id = ?", sessionID).
+		Delete(&Session{}).Error
 }
 
 // CreateUser creates a new user

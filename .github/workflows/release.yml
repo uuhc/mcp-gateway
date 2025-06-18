@@ -133,7 +133,7 @@ jobs:
           cp configs/mcp-gateway.yaml release/linux-amd64/configs/
           # Create data directory and empty files
           mkdir -p release/linux-amd64/data
-          touch release/linux-amd64/data/mcp-gateway.db
+          touch release/linux-amd64/data/unla.db
           touch release/linux-amd64/data/mcp-gateway.pid
           # Copy and modify .env
           cp .env.example release/linux-amd64/.env
@@ -157,7 +157,7 @@ jobs:
           cp configs/mcp-gateway.yaml release/linux-arm64/configs/
           # Create data directory and empty files
           mkdir -p release/linux-arm64/data
-          touch release/linux-arm64/data/mcp-gateway.db
+          touch release/linux-arm64/data/unla.db
           touch release/linux-arm64/data/mcp-gateway.pid
           # Copy and modify .env
           cp .env.example release/linux-arm64/.env
@@ -181,7 +181,7 @@ jobs:
           cp configs/mcp-gateway.yaml release/darwin-amd64/configs/
           # Create data directory and empty files
           mkdir -p release/darwin-amd64/data
-          touch release/darwin-amd64/data/mcp-gateway.db
+          touch release/darwin-amd64/data/unla.db
           touch release/darwin-amd64/data/mcp-gateway.pid
           # Copy and modify .env
           cp .env.example release/darwin-amd64/.env
@@ -205,7 +205,7 @@ jobs:
           cp configs/mcp-gateway.yaml release/darwin-arm64/configs/
           # Create data directory and empty files
           mkdir -p release/darwin-arm64/data
-          touch release/darwin-arm64/data/mcp-gateway.db
+          touch release/darwin-arm64/data/unla.db
           touch release/darwin-arm64/data/mcp-gateway.pid
           # Copy and modify .env
           cp .env.example release/darwin-arm64/.env
@@ -229,7 +229,7 @@ jobs:
           cp configs/mcp-gateway.yaml release/windows-amd64/configs/
           # Create data directory and empty files
           mkdir -p release/windows-amd64/data
-          touch release/windows-amd64/data/mcp-gateway.db
+          touch release/windows-amd64/data/unla.db
           touch release/windows-amd64/data/mcp-gateway.pid
           # Copy and modify .env
           cp .env.example release/windows-amd64/.env

@@ -2,11 +2,11 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/apiserver/database"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/i18n"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/mcp/storage"
-	"github.com/mcp-ecosystem/mcp-gateway/internal/mcp/storage/notifier"
-	"github.com/mcp-ecosystem/mcp-gateway/pkg/openapi"
+	"github.com/amoylab/unla/internal/apiserver/database"
+	"github.com/amoylab/unla/internal/i18n"
+	"github.com/amoylab/unla/internal/mcp/storage"
+	"github.com/amoylab/unla/internal/mcp/storage/notifier"
+	"github.com/amoylab/unla/pkg/openapi"
 	"go.uber.org/zap"
 )
 

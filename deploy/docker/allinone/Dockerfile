@@ -34,7 +34,7 @@ COPY web/ .
 
 RUN npm run build
 
-FROM ghcr.io/mcp-ecosystem/mcp-gateway/base:latest AS runtime
+FROM ghcr.io/amoylab/unla/base:latest AS runtime
 
 ARG PIP_INDEX_URL=https://pypi.org/simple
 ARG UV_DEFAULT_INDEX=https://pypi.org/simple
@@ -52,13 +52,14 @@ RUN mkdir -p /root/.config/pip && \
 COPY deploy/docker/allinone/supervisord.conf /etc/supervisor/conf.d/
 COPY deploy/docker/allinone/nginx.conf /etc/nginx/nginx.conf
 RUN mkdir -p /app/data
-COPY configs/apiserver.yaml /etc/mcp-gateway/
-COPY configs/mcp-gateway.yaml /etc/mcp-gateway/
+COPY configs/apiserver.yaml /etc/unla/
+COPY configs/mcp-gateway.yaml /etc/unla/
 COPY configs/i18n /app/configs/i18n/
 
 COPY --from=builder /app/bin/mcp-gateway /usr/local/bin/
 COPY --from=builder /app/bin/mock-server /usr/local/bin/
 COPY --from=builder /app/bin/apiserver /usr/local/bin/
+COPY --from=builder /app/assets /app/assets
 
 COPY --from=web-builder /app/web/dist /usr/share/nginx/html
 

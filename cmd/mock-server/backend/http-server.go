@@ -13,6 +13,14 @@ import (
 	"go.uber.org/zap"
 )
 
+// Notification represents a user's notification preference
+type Notification struct {
+	Type      string  `json:"type"`      // email, push, sms
+	Channel   string  `json:"channel"`   // marketing, system, security
+	Enabled   bool    `json:"enabled"`   // whether this notification is enabled
+	Frequency float64 `json:"frequency"` // 0: realtime, 1: daily, 2: weekly, 3: monthly
+}
+
 type User struct {
 	ID        string    `json:"id"`
 	Username  string    `json:"username"`
@@ -20,11 +28,12 @@ type User struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// Add new fields for testing
 	Preferences struct {
-		IsPublic  bool           `json:"isPublic"`
-		ShowEmail bool           `json:"showEmail"`
-		Theme     string         `json:"theme"`
-		Tags      []string       `json:"tags"`
-		Settings  map[string]any `json:"settings"`
+		IsPublic      bool           `json:"isPublic"`
+		ShowEmail     bool           `json:"showEmail"`
+		Theme         string         `json:"theme"`
+		Tags          []string       `json:"tags"`
+		Settings      map[string]any `json:"settings"`
+		Notifications []Notification `json:"notifications"`
 	} `json:"preferences"`
 }
 
@@ -65,6 +74,7 @@ func NewHTTPServer() *HTTPServer {
 		user.Preferences.Theme = "light"
 		user.Preferences.Tags = []string{}
 		user.Preferences.Settings = make(map[string]any)
+		user.Preferences.Notifications = []Notification{}
 
 		// Store user
 		users[user.Email] = &user
@@ -93,11 +103,12 @@ func NewHTTPServer() *HTTPServer {
 		}
 
 		var preferences struct {
-			IsPublic  bool           `json:"isPublic"`
-			ShowEmail bool           `json:"showEmail"`
-			Theme     string         `json:"theme"`
-			Tags      []string       `json:"tags"`
-			Settings  map[string]any `json:"settings"`
+			IsPublic      bool           `json:"isPublic"`
+			ShowEmail     bool           `json:"showEmail"`
+			Theme         string         `json:"theme"`
+			Tags          []string       `json:"tags"`
+			Settings      map[string]any `json:"settings"`
+			Notifications []Notification `json:"notifications"`
 		}
 
 		if err := c.ShouldBindJSON(&preferences); err != nil {
